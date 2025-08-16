@@ -180,6 +180,44 @@
   </div>
 
   <script>
+    // === PERSISTENCE (Сохранения на устройстве + оффлайн-рекавери энергии)
+    const SAVE_KEY = 'clicker_save_v1';
+
+    function saveState(){
+      const payload = {
+        stars, energy, maxEnergy, perClick, regenPerSec,
+        priceClick, priceMax, priceRegen, priceBg,
+        ownedBgAlt, appliedBg,
+        ts: Date.now()
+      };
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch(e) {}
+    }
+
+    function loadState(){
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if(!raw) return;
+        const d = JSON.parse(raw);
+        if(typeof d.stars === 'number') stars = d.stars;
+        if(typeof d.energy === 'number') energy = d.energy;
+        if(typeof d.maxEnergy === 'number') maxEnergy = d.maxEnergy;
+        if(typeof d.perClick === 'number') perClick = d.perClick;
+        if(typeof d.regenPerSec === 'number') regenPerSec = d.regenPerSec;
+        if(typeof d.priceClick === 'number') priceClick = d.priceClick;
+        if(typeof d.priceMax === 'number') priceMax = d.priceMax;
+        if(typeof d.priceRegen === 'number') priceRegen = d.priceRegen;
+        if(typeof d.priceBg === 'number') priceBg = d.priceBg;
+        if(typeof d.ownedBgAlt === 'boolean') ownedBgAlt = d.ownedBgAlt;
+        if(d.appliedBg === 'room' || d.appliedBg === 'alt') appliedBg = d.appliedBg;
+
+        // Оффлайн накопление энергии с последнего визита
+        if(typeof d.ts === 'number'){
+          const secs = Math.max(0, Math.floor((Date.now() - d.ts)/1000));
+          energy = Math.min(maxEnergy, energy + secs * regenPerSec);
+        }
+      } catch(e) {}
+    }
+
     // === DOM
     const wrapper = document.getElementById('wrapper');
     const gameRoot = document.getElementById('game');
@@ -208,10 +246,13 @@
     const bgRoom = document.getElementById('bg-room');
     const bgAlt = document.getElementById('bg-alt');
 
-    // === State
+    // === State (дефолты)
     let stars = 0, energy = 100, maxEnergy = 100, perClick = 1, regenPerSec = 1;
     let priceClick = 20, priceMax = 30, priceRegen = 25, priceBg = 50;
     let ownedBgAlt = false, appliedBg = 'room';
+
+    // Подгрузка сохранений до первого рендера
+    loadState();
 
     function refreshUI(){
       scoreDisplay.textContent = stars; scoreBig.textContent = stars;
@@ -226,6 +267,13 @@
       if(costMax) costMax.textContent = priceMax;
       if(costRegen) costRegen.textContent = priceRegen;
       if(btnApplyBg) btnApplyBg.disabled = !ownedBgAlt;
+
+      // Применить сохранённый фон
+      if(appliedBg === 'alt'){
+        bgAlt.style.opacity = 1; bgRoom.style.opacity = 0; bgAlt.classList.add('dim-3');
+      } else {
+        bgAlt.style.opacity = 0; bgRoom.style.opacity = 1; bgAlt.classList.remove('dim-3');
+      }
     }
     refreshUI();
 
@@ -244,12 +292,17 @@
     }
 
     function onClickCharacter(e){
-      if(energy>=1){ stars+=perClick; energy-=1; showFloatingCoin(e); refreshUI(); }
+      if(energy>=1){ stars+=perClick; energy-=1; showFloatingCoin(e); refreshUI(); saveState(); }
     }
     character.addEventListener('mousedown', onClickCharacter);
     character.addEventListener('touchstart', (e)=>{ e.preventDefault(); onClickCharacter(e) });
 
     setInterval(()=>{ if(energy<maxEnergy){ energy+=regenPerSec/2; if(energy>maxEnergy) energy=maxEnergy; refreshUI(); } },500);
+
+    // Автосейв каждые 5 секунд и при сворачивании
+    setInterval(saveState, 5000);
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
+    window.addEventListener('beforeunload', saveState);
 
     // Tabs
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
@@ -271,29 +324,31 @@
     document.addEventListener('touchend',(e)=>{ if(tY===null) return; const dy=e.changedTouches[0].clientY - tY; if(dy>60) closeScreens(); tY=null; });
 
     // Upgrades
-    function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); return true;} return false; }
-    if(btnBuyClick) btnBuyClick.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); } });
-    if(btnBuyMax) btnBuyMax.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); } });
-    if(btnBuyRegen) btnBuyRegen.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); } });
+    function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); saveState(); return true;} return false; }
+    if(btnBuyClick) btnBuyClick.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); saveState(); } });
+    if(btnBuyMax) btnBuyMax.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); saveState(); } });
+    if(btnBuyRegen) btnBuyRegen.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); saveState(); } });
 
     // Магазин фона — затемнение альт‑фона на 3%
-    if(btnBuyBg) btnBuyBg.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); } });
+    if(btnBuyBg) btnBuyBg.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); saveState(); } });
     if(btnApplyBg) btnApplyBg.addEventListener('click', ()=>{
       if(!ownedBgAlt) return;
       if(appliedBg==='room'){
         bgAlt.style.opacity=1; bgRoom.style.opacity=0; appliedBg='alt';
-        bgAlt.classList.add('dim-3'); // делаем на 3% темнее
+        bgAlt.classList.add('dim-3');
       } else {
         bgAlt.style.opacity=0; bgRoom.style.opacity=1; appliedBg='room';
-        bgAlt.classList.remove('dim-3'); // убираем затемнение
+        bgAlt.classList.remove('dim-3');
       }
+      saveState();
     });
 
     // Quests
     document.querySelectorAll('.quest-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ const type=btn.getAttribute('data-quest'); if(type==='50'){ stars+=15; btn.disabled=true; btn.textContent='Получено'; } if(type==='upgrade1'){ stars+=10; btn.disabled=true; btn.textContent='Получено'; } refreshUI(); });
+      btn.addEventListener('click', ()=>{ const type=btn.getAttribute('data-quest'); if(type==='50'){ stars+=15; btn.disabled=true; btn.textContent='Получено'; } if(type==='upgrade1'){ stars+=10; btn.disabled=true; btn.textContent='Получено'; } refreshUI(); saveState(); });
     });
   </script>
 </body>
 </html>
+
 
