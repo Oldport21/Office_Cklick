@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Кликер" />
+  <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/apple/354/star_2b50.png" />
+  <title>Кликер Персонажа — 9:16 (альт‑фон затемнён на 3%)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--blur-bg:6px}
+    body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
+    /* Карточка игры 9:16 */
+    .game-wrapper{position:relative;width:100%;max-width:420px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+    .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
+    .dim-3{filter:brightness(0.97)} /* на 3% темнее */
+    .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:rgba(0,0,0,.28)}
+
+    /* Персонаж и подиум */
+    .podium{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
+    .character{cursor:pointer;transition:transform .1s ease-in-out;user-select:none;position:relative;z-index:6}
+    .character:active{transform:scale(.97)}
+
+    /* +⭐ */
+    .floating-coin{position:absolute;display:flex;align-items:center;gap:6px;font-size:1.1rem;font-weight:800;color:#facc15;animation:floatUp 1s ease-out forwards;pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,.55);z-index:60}
+    .floating-coin img{width:18px;height:18px}
+    @keyframes floatUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-100px);opacity:0}}
+    @keyframes pulse{0%,100%{filter:drop-shadow(0 0 6px #facc15) drop-shadow(0 0 12px #f59e0b)}50%{filter:drop-shadow(0 0 16px #facc15) drop-shadow(0 0 28px #f59e0b)}}
+
+    /* Экраны вкладок */
+    .screen{position:absolute;left:0;right:0;bottom:72px;top:96px;margin:12px;padding:12px 12px 16px;border-radius:16px;background:rgba(0,0,0,.65);backdrop-filter:blur(var(--blur-bg));-webkit-backdrop-filter:blur(var(--blur-bg));overflow:auto;display:none;z-index:30}
+    .screen.active{display:block}
+    .screen, .screen *{color:#fff}
+    .screen-title{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0));padding:6px 0 10px;z-index:1}
+    .screen-close{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.12)}
+
+    .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
+    .scene-dim .center-area{filter:blur(1px) brightness(.92)}
+  </style>
+</head>
+<body>
+  <div class="game-wrapper" id="wrapper">
+    <!-- Фоны 9:16 -->
+    <img id="bg-room" class="game-bg" src="https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png" alt="Фон: Комната">
+    <img id="bg-alt" class="game-bg" src="https://i.postimg.cc/CKj0fd2f/Chat-GPT-Image-17-2025-01-38-13.png" alt="Фон: Новый" style="opacity:0">
+
+    <div id="game" class="game-content">
+      <!-- Верхняя панель -->
+      <header class="flex justify-between items-center w-full mb-2">
+        <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
+          <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐" class="w-5 h-5"/>
+          <span id="score" class="font-bold text-lg">0</span>
+        </div>
+        <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
+          <span class="text-yellow-300 text-2xl">₽</span>
+          <span id="money-display" class="font-bold text-lg">0.00</span>
+        </div>
+      </header>
+
+      <!-- Центр -->
+      <main class="center-area flex-grow flex flex-col items-center justify-center">
+        <div class="flex items-center gap-2 mb-4">
+          <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="Star Icon" class="w-10 h-10">
+          <span id="score-big" class="text-5xl font-bold">0</span>
+        </div>
+        <div class="relative w-64 h-64 md:w-80 md:h-80 mb-10">
+          <div class="podium"></div>
+          <img id="character" src="https://i.postimg.cc/0NBQgS0S/2.png" alt="Игровой персонаж" class="character w-full h-full drop-shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/320x320/334155/ffffff?text=Error';">
+        </div>
+        <!-- Энергия -->
+        <div class="w-full max-w-xs mt-2">
+          <div class="flex justify-between text-sm font-semibold mb-1 text-white">
+            <span>Энергия</span>
+            <span><span id="energy-level">100</span> / <span id="max-energy">100</span></span>
+          </div>
+          <div class="w-full bg-black/60 rounded-full h-4">
+            <div id="energy-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-4 rounded-full" style="width:100%"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Экраны вкладок -->
+      <section id="screen-income" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Звёзд за клик</span><strong id="stat-per-click">1</strong></div>
+          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Восстановление энергии / сек</span><strong id="stat-regen">1</strong></div>
+          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Макс. энергия</span><strong id="stat-max-energy">100</strong></div>
+        </div>
+      </section>
+
+      <section id="screen-upgrades" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Улучшения</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <div class="grid gap-3 text-sm">
+          <div class="bg-white/10 p-3 rounded-lg">
+            <div class="flex items-center justify-between mb-2"><div>
+              <p class="font-semibold">+1 к звёздам за клик</p>
+              <p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div>
+              <button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> ⭐</button>
+            </div>
+          </div>
+          <div class="bg-white/10 p-3 rounded-lg">
+            <div class="flex items-center justify-between mb-2"><div>
+              <p class="font-semibold">+10 к максимальной энергии</p>
+              <p class="text-xs text-white/80">Больше кликов подряд</p></div>
+              <button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> ⭐</button>
+            </div>
+          </div>
+          <div class="bg-white/10 p-3 rounded-lg">
+            <div class="flex items-center justify-between mb-2"><div>
+              <p class="font-semibold">+0.5 к восстановлению энергии</p>
+              <p class="text-xs text-white/80">Энергия быстрее возвращается</p></div>
+              <button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> ⭐</button>
+            </div>
+          </div>
+          <div class="bg-white/10 p-3 rounded-lg">
+            <div class="flex items-center justify-between mb-2"><div>
+              <p class="font-semibold">Новый фон (твой 9:16)</p>
+              <p class="text-xs text-white/80">Сменит задний фон на загруженный 9:16</p></div>
+              <div class="flex items-center gap-2">
+                <button id="buy-bg" class="px-3 py-1 rounded-md bg-purple-500/30 hover:bg-purple-500/50">Купить за <span id="cost-bg">50</span> ⭐</button>
+                <button id="apply-bg" class="px-3 py-1 rounded-md bg-purple-600/30 hover:bg-purple-600/50" disabled>Применить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-wallet" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Кошелёк</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <div class="grid gap-3 text-sm">
+          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Баланс звёзд</span><strong id="wallet-stars">0 ⭐</strong></div>
+          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Баланс ₽</span><strong id="wallet-rub">0.00 ₽</strong></div>
+          <p class="text-white/90">Позже можно добавить реальные задания/выплаты. Сейчас — внутриигровой баланс для покупок.</p>
+        </div>
+      </section>
+
+      <section id="screen-friends" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Друзья</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <ul class="space-y-2 text-sm">
+          <li class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Пригласи друга — получи 20 ⭐</span><button class="px-3 py-1 rounded-md bg-indigo-500/30 hover:bg-indigo-500/50">Поделиться</button></li>
+          <li class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Ещё заглушка раздела</span><button class="px-3 py-1 rounded-md bg-indigo-500/30 hover:bg-indigo-500/50">Скоро</button></li>
+        </ul>
+      </section>
+
+      <section id="screen-quests" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Задания</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <div class="space-y-2 text-sm">
+          <div class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Сделай 50 кликов</span><button data-quest="50" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 15 ⭐</button></div>
+          <div class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Купи 1 улучшение</span><button data-quest="upgrade1" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 10 ⭐</button></div>
+        </div>
+      </section>
+
+      <!-- Футер с вкладками -->
+      <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
+        <nav class="flex justify-around items-center">
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
+            <div class="p-3 bg-yellow-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="text-xs mt-1">Доход</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false">
+            <div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="text-xs mt-1">Улучшения</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-wallet" aria-selected="false">
+            <div class="p-3 bg-green-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><span class="text-xs mt-1">Кошелек</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-friends" aria-selected="false">
+            <div class="p-3 bg-purple-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="text-xs mt-1">Друзья</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-quests" aria-selected="false">
+            <div class="p-3 bg-rose-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><span class="text-xs mt-1">Задания</span>
+          </button>
+        </nav>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // === DOM
+    const wrapper = document.getElementById('wrapper');
+    const gameRoot = document.getElementById('game');
+    const character = document.getElementById('character');
+    const scoreDisplay = document.getElementById('score');
+    const scoreBig = document.getElementById('score-big');
+    const energyBar = document.getElementById('energy-bar');
+    const energyLevelDisplay = document.getElementById('energy-level');
+    const maxEnergyDisplay = document.getElementById('max-energy');
+
+    const walletStars = document.getElementById('wallet-stars');
+    const statPerClick = document.getElementById('stat-per-click');
+    const statRegen = document.getElementById('stat-regen');
+    const statMaxEnergy = document.getElementById('stat-max-energy');
+
+    const btnBuyClick = document.getElementById('buy-click');
+    const btnBuyMax = document.getElementById('buy-max');
+    const btnBuyRegen = document.getElementById('buy-regen');
+
+    const costClick = document.getElementById('cost-click');
+    const costMax = document.getElementById('cost-max');
+    const costRegen = document.getElementById('cost-regen');
+
+    const btnBuyBg = document.getElementById('buy-bg');
+    const btnApplyBg = document.getElementById('apply-bg');
+    const bgRoom = document.getElementById('bg-room');
+    const bgAlt = document.getElementById('bg-alt');
+
+    // === State
+    let stars = 0, energy = 100, maxEnergy = 100, perClick = 1, regenPerSec = 1;
+    let priceClick = 20, priceMax = 30, priceRegen = 25, priceBg = 50;
+    let ownedBgAlt = false, appliedBg = 'room';
+
+    function refreshUI(){
+      scoreDisplay.textContent = stars; scoreBig.textContent = stars;
+      if(walletStars) walletStars.textContent = stars + ' ⭐';
+      energyLevelDisplay.textContent = Math.floor(energy);
+      if(maxEnergyDisplay) maxEnergyDisplay.textContent = maxEnergy;
+      energyBar.style.width = (energy/maxEnergy*100) + '%';
+      if(statPerClick) statPerClick.textContent = perClick;
+      if(statRegen) statRegen.textContent = regenPerSec;
+      if(statMaxEnergy) statMaxEnergy.textContent = maxEnergy;
+      if(costClick) costClick.textContent = priceClick;
+      if(costMax) costMax.textContent = priceMax;
+      if(costRegen) costRegen.textContent = priceRegen;
+      if(btnApplyBg) btnApplyBg.disabled = !ownedBgAlt;
+    }
+    refreshUI();
+
+    // +⭐
+    function showFloatingCoin(evt){
+      const el = document.createElement('div');
+      el.className = 'floating-coin';
+      el.innerHTML = '+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';
+      const rect = wrapper.getBoundingClientRect();
+      const cx = (evt.clientX || (evt.touches && evt.touches[0].clientX)) - rect.left;
+      const cy = (evt.clientY || (evt.touches && evt.touches[0].clientY)) - rect.top - 20;
+      el.style.left = (cx + (Math.random()*24-12))+'px';
+      el.style.top  = cy+'px';
+      wrapper.appendChild(el);
+      setTimeout(()=>el.remove(),1000);
+    }
+
+    function onClickCharacter(e){
+      if(energy>=1){ stars+=perClick; energy-=1; showFloatingCoin(e); refreshUI(); }
+    }
+    character.addEventListener('mousedown', onClickCharacter);
+    character.addEventListener('touchstart', (e)=>{ e.preventDefault(); onClickCharacter(e) });
+
+    setInterval(()=>{ if(energy<maxEnergy){ energy+=regenPerSec/2; if(energy>maxEnergy) energy=maxEnergy; refreshUI(); } },500);
+
+    // Tabs
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const screens = {
+      income: document.getElementById('screen-income'),
+      upgrades: document.getElementById('screen-upgrades'),
+      wallet: document.getElementById('screen-wallet'),
+      friends: document.getElementById('screen-friends'),
+      quests: document.getElementById('screen-quests')
+    };
+    function hideAllScreens(){ Object.values(screens).forEach(el=>{ if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); } }); gameRoot.classList.remove('scene-dim'); }
+    function setActiveBtn(btn){ tabButtons.forEach(b=>b.setAttribute('aria-selected','false')); if(btn) btn.setAttribute('aria-selected','true'); }
+    function openScreenById(id){ hideAllScreens(); const el=document.getElementById(id); if(el){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); gameRoot.classList.add('scene-dim'); } }
+    function closeScreens(){ hideAllScreens(); setActiveBtn(null); }
+    tabButtons.forEach(btn=>btn.addEventListener('click',()=>{ const id=btn.getAttribute('data-screen'); const el=document.getElementById(id); const opened=el && el.classList.contains('active'); if(opened){ closeScreens(); } else { openScreenById(id); setActiveBtn(btn); } }));
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
+    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeScreens(); });
+    let tY=null; document.addEventListener('touchstart',(e)=>{tY=e.touches[0].clientY;},{passive:true});
+    document.addEventListener('touchend',(e)=>{ if(tY===null) return; const dy=e.changedTouches[0].clientY - tY; if(dy>60) closeScreens(); tY=null; });
+
+    // Upgrades
+    function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); return true;} return false; }
+    if(btnBuyClick) btnBuyClick.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); } });
+    if(btnBuyMax) btnBuyMax.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); } });
+    if(btnBuyRegen) btnBuyRegen.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); } });
+
+    // Магазин фона — затемнение альт‑фона на 3%
+    if(btnBuyBg) btnBuyBg.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); } });
+    if(btnApplyBg) btnApplyBg.addEventListener('click', ()=>{
+      if(!ownedBgAlt) return;
+      if(appliedBg==='room'){
+        bgAlt.style.opacity=1; bgRoom.style.opacity=0; appliedBg='alt';
+        bgAlt.classList.add('dim-3'); // делаем на 3% темнее
+      } else {
+        bgAlt.style.opacity=0; bgRoom.style.opacity=1; appliedBg='room';
+        bgAlt.classList.remove('dim-3'); // убираем затемнение
+      }
+    });
+
+    // Quests
+    document.querySelectorAll('.quest-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ const type=btn.getAttribute('data-quest'); if(type==='50'){ stars+=15; btn.disabled=true; btn.textContent='Получено'; } if(type==='upgrade1'){ stars+=10; btn.disabled=true; btn.textContent='Получено'; } refreshUI(); });
+    });
+  </script>
+</body>
+</html>
+
