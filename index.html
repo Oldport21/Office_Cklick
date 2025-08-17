@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Кликер" />
   <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/apple/354/star_2b50.png" />
-  <title>Кликер — Кошелёк ≠ Опыт (уровень не падает при тратах)</title>
+  <title>Кликер — персонаж на платформе, мягкое приземление</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,20 +19,33 @@
     .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
     .dim-3{filter:brightness(0.97)}
     .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:rgba(0,0,0,.28)}
-    .podium{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
-    .character{cursor:pointer;transition:transform .1s ease-in-out;user-select:none;position:relative;z-index:6}
-    .character:active{transform:scale(.97)}
+
+    /* Платформа как раньше (200x60), ниже пола */
+    .podium{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
+
+    /* Персонаж опущен так, чтобы стоял на платформе. Мягкое приземление. */
+    .character{position:relative;top:16px;cursor:pointer;transition:transform .1s ease-in-out;user-select:none;z-index:6;animation:land .6s cubic-bezier(.2,.9,.2,1) 60ms both}
+    .character:active{transform:scale(.98)}
+
+    @keyframes land{0%{transform:translateY(-24px) scale(1.02);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
+
+    .big-score{margin-top:-10px}
+
     .floating-coin{position:absolute;display:flex;align-items:center;gap:6px;font-size:1.1rem;font-weight:800;color:#facc15;animation:floatUp 1s ease-out forwards;pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,.55);z-index:60}
     .floating-coin img{width:18px;height:18px}
     @keyframes floatUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-100px);opacity:0}}
-    @keyframes pulse{0%,100%{filter:drop-shadow(0 0 6px #facc15) drop-shadow(0 0 12px #f59e0b)}50%{filter:drop-shadow(0 0 16px #facc15) drop-shadow(0 0 28px #f59e0b)}}
+    @keyframes pulse{0%,100%{filter:drop-shadow(0 0 8px #facc15) drop-shadow(0 0 14px #f59e0b)}50%{filter:drop-shadow(0 0 18px #facc15) drop-shadow(0 0 30px #f59e0b)}}
+
     .screen{position:absolute;left:0;right:0;bottom:72px;top:122px;margin:12px;padding:12px 12px 16px;border-radius:16px;background:rgba(0,0,0,.65);backdrop-filter:blur(var(--blur-bg));-webkit-backdrop-filter:blur(var(--blur-bg));overflow:auto;display:none;z-index:30}
     .screen.active{display:block}
     .screen, .screen *{color:#fff}
     .screen-title{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0));padding:6px 0 10px;z-index:1}
     .screen-close{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.12)}
+
     .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
     .scene-dim .center-area{filter:blur(1px) brightness(.92)}
+
+    /* Слот‑машина (без изменений логики) */
     .slots-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
     .slots-box{position:relative;width:300px;border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
     .slots-window{position:relative;overflow:hidden;height:var(--cell-h);background:rgba(0,0,0,.25);border-radius:12px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.14)}
@@ -52,6 +65,7 @@
     <img id="bg-alt" class="game-bg" src="https://i.postimg.cc/CKj0fd2f/Chat-GPT-Image-17-2025-01-38-13.png" alt="Фон: Новый" style="opacity:0">
 
     <div id="game" class="game-content">
+      <!-- Верхняя панель + ЛВЛ бар -->
       <header class="flex justify-between items-center w-full mb-2">
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
@@ -70,7 +84,6 @@
         </div>
       </header>
 
-      <!-- Полоса прогресса уровня -->
       <div class="w-full px-1 mb-2">
         <div class="flex items-center justify-between text-xs text-white/80 mb-1">
           <span>До следующего уровня</span>
@@ -81,16 +94,17 @@
         </div>
       </div>
 
+      <!-- Центр -->
       <main class="center-area flex-grow flex flex-col items-center justify-center">
-        <div class="flex items-center gap-2 mb-4">
+        <div class="big-score flex items-center gap-2 mb-2">
           <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="Star Icon" class="w-10 h-10">
           <span id="score-big" class="text-5xl font-bold">0</span>
         </div>
-        <div class="relative w-64 h-64 md:w-80 md:h-80 mb-10">
+        <div class="relative w-72 h-72 md:w-96 md:h-96 mb-6">
           <div class="podium"></div>
           <img id="character" src="https://i.postimg.cc/fLpZNSq3/3.png" alt="Игровой персонаж" class="character w-full h-full drop-shadow-lg" onerror="this.onerror=null;this.src='https://i.postimg.cc/fLpZNSq3/3.png';">
         </div>
-        <div class="w-full max-w-xs mt-2">
+        <div class="w-full max-w-xs mt-1">
           <div class="flex justify-between text-sm font-semibold mb-1 text-white">
             <span>Энергия</span>
             <span><span id="energy-level">100</span> / <span id="max-energy">100</span></span>
@@ -101,6 +115,7 @@
         </div>
       </main>
 
+      <!-- Экраны ... (Доход, Улучшения, Игра/Слоты, Кошелёк, Друзья, Задания) -->
       <section id="screen-income" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="space-y-2 text-sm">
@@ -207,25 +222,32 @@
         </div>
       </section>
 
+      <!-- Нижнее меню: одинаковая структура, подпись снизу -->
       <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
-        <nav class="flex justify-around items-center">
+        <nav class="flex justify-around items-end">
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
-            <div class="p-3 bg-yellow-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="text-xs mt-1">Доход</span>
+            <div class="p-3 bg-yellow-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <span class="text-xs mt-1">Доход</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false">
-            <div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="text-xs mt-1">Улучшения</span>
+            <div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <span class="text-xs mt-1">Улучшения</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-game" aria-selected="false">
-            <div class="p-3 bg-amber-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg></div><span class="text-xs mt-1">Игра</span>
+            <div class="p-3 bg-amber-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg></div>
+            <span class="text-xs mt-1">Игра</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-wallet" aria-selected="false">
-            <div class="p-3 bg-green-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><span class="text-xs mt-1">Кошелек</span>
+            <div class="p-3 bg-green-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <span class="text-xs mt-1">Кошелек</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-friends" aria-selected="false">
-            <div class="p-3 bg-purple-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="text-xs mt-1">Друзья</span>
+            <div class="p-3 bg-purple-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <span class="text-xs mt-1">Друзья</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-quests" aria-selected="false">
-            <div class="p-3 bg-rose-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><span class="text-xs mt-1">Задания</span>
+            <div class="p-3 bg-rose-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-rose-300"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <span class="text-xs mt-1">Задания</span>
           </button>
         </nav>
       </footer>
@@ -234,191 +256,87 @@
 
   <script>
     const SAVE_KEY = 'clicker_save_v1';
-
-    // ====== STATE (кошелёк и опыт разделены) ======
-    let stars = 0;          // Кошелёк (тратится)
-    let xp = 0;             // Опыт (только растёт)
-    let energy = 100, maxEnergy = 100, perClick = 1, regenPerSec = 1;
-    let priceClick = 20, priceMax = 30, priceRegen = 25, priceBg = 200;
-    let ownedBgAlt = false, appliedBg = 'room';
-
-    const CHAR_LVL1 = 'https://i.postimg.cc/fLpZNSq3/3.png';
-    const CHAR_LVL2 = 'https://i.postimg.cc/0NBQgS0S/2.png';
-
-    function saveState(){
-      const payload = {stars, xp, energy, maxEnergy, perClick, regenPerSec, priceClick, priceMax, priceRegen, priceBg, ownedBgAlt, appliedBg, ts: Date.now()};
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch(e) {}
-    }
-    function loadState(){
-      try{
-        const raw = localStorage.getItem(SAVE_KEY);
-        if(raw){
-          const d = JSON.parse(raw);
-          if(typeof d.stars==='number') stars=d.stars;
-          // совместимость со старым сейвом
-          if(typeof d.xp==='number') xp=d.xp; else xp = Math.max(stars, 0);
-          if(typeof d.energy==='number') energy=d.energy;
-          if(typeof d.maxEnergy==='number') maxEnergy=d.maxEnergy;
-          if(typeof d.perClick==='number') perClick=d.perClick;
-          if(typeof d.regenPerSec==='number') regenPerSec=d.regenPerSec;
-          if(typeof d.priceClick==='number') priceClick=d.priceClick;
-          if(typeof d.priceMax==='number') priceMax=d.priceMax;
-          if(typeof d.priceRegen==='number') priceRegen=d.priceRegen;
-          if(typeof d.priceBg==='number') priceBg=d.priceBg;
-          if(typeof d.ownedBgAlt==='boolean') ownedBgAlt=d.ownedBgAlt;
-          if(d.appliedBg==='room'||d.appliedBg==='alt') appliedBg=d.appliedBg;
-          if(typeof d.ts==='number'){
-            const secs=Math.max(0,Math.floor((Date.now()-d.ts)/1000));
-            energy=Math.min(maxEnergy, energy+secs*regenPerSec);
-          }
-        }
-      }catch(e){}
-      if(!ownedBgAlt && priceBg < 200) priceBg = 200; // поднять цену фона если старый сейв
-    }
+    let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;let priceClick=20,priceMax=30,priceRegen=25,priceBg=200;let ownedBgAlt=false,appliedBg='room';
+    const CHAR_LVL1='https://i.postimg.cc/fLpZNSq3/3.png';
+    const CHAR_LVL2='https://i.postimg.cc/0NBQgS0S/2.png';
+    function saveState(){const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,priceBg,ownedBgAlt,appliedBg,ts:Date.now()};try{localStorage.setItem(SAVE_KEY,JSON.stringify(p));}catch(e){}}
+    function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;priceBg=d.priceBg??priceBg;ownedBgAlt=!!d.ownedBgAlt;appliedBg=(d.appliedBg==='alt')?'alt':'room';const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec);}}catch(e){}if(!ownedBgAlt&&priceBg<200)priceBg=200}
     loadState();
 
-    const wrapper = document.getElementById('wrapper');
-    const gameRoot = document.getElementById('game');
-    const character = document.getElementById('character');
-    const levelEl = document.getElementById('level');
-    const lvlProgressText = document.getElementById('lvl-progress');
-    const lvlProgressBar = document.getElementById('lvl-progress-bar');
-    const scoreDisplay = document.getElementById('score');
-    const scoreBig = document.getElementById('score-big');
-    const energyBar = document.getElementById('energy-bar');
-    const energyLevelDisplay = document.getElementById('energy-level');
-    const maxEnergyDisplay = document.getElementById('max-energy');
-    const walletStars = document.getElementById('wallet-stars');
-    const statPerClick = document.getElementById('stat-per-click');
-    const statRegen = document.getElementById('stat-regen');
-    const statMaxEnergy = document.getElementById('stat-max-energy');
-    const btnBuyClick = document.getElementById('buy-click');
-    const btnBuyMax = document.getElementById('buy-max');
-    const btnBuyRegen = document.getElementById('buy-regen');
-    const costClick = document.getElementById('cost-click');
-    const costMax = document.getElementById('cost-max');
-    const costRegen = document.getElementById('cost-regen');
-    const btnBuyBg = document.getElementById('buy-bg');
-    const btnApplyBg = document.getElementById('apply-bg');
-    const costBgSpan = document.getElementById('cost-bg');
-    const bgRoom = document.getElementById('bg-room');
-    const bgAlt = document.getElementById('bg-alt');
-    const resetBtn = document.getElementById('reset-progress');
+    const wrapper=document.getElementById('wrapper');
+    const gameRoot=document.getElementById('game');
+    const character=document.getElementById('character');
+    const levelEl=document.getElementById('level');
+    const lvlProgressText=document.getElementById('lvl-progress');
+    const lvlProgressBar=document.getElementById('lvl-progress-bar');
+    const scoreDisplay=document.getElementById('score');
+    const scoreBig=document.getElementById('score-big');
+    const energyBar=document.getElementById('energy-bar');
+    const energyLevelDisplay=document.getElementById('energy-level');
+    const maxEnergyDisplay=document.getElementById('max-energy');
+    const walletStars=document.getElementById('wallet-stars');
+    const statPerClick=document.getElementById('stat-per-click');
+    const statRegen=document.getElementById('stat-regen');
+    const statMaxEnergy=document.getElementById('stat-max-energy');
+    const btnBuyClick=document.getElementById('buy-click');
+    const btnBuyMax=document.getElementById('buy-max');
+    const btnBuyRegen=document.getElementById('buy-regen');
+    const costClick=document.getElementById('cost-click');
+    const costMax=document.getElementById('cost-max');
+    const costRegen=document.getElementById('cost-regen');
+    const btnBuyBg=document.getElementById('buy-bg');
+    const btnApplyBg=document.getElementById('apply-bg');
+    const costBgSpan=document.getElementById('cost-bg');
+    const bgRoom=document.getElementById('bg-room');
+    const bgAlt=document.getElementById('bg-alt');
 
-    function currentLevel(){ return Math.floor(xp / 200) + 1; }
-    function refreshCharacterByLevel(){ const lvl=currentLevel(); const need=lvl>=2?CHAR_LVL2:CHAR_LVL1; if(character.getAttribute('src')!==need){ character.setAttribute('src',need); } }
-    function refreshLevelBar(){ const prog = xp % 200; lvlProgressText.textContent = prog; const pct = (prog/200)*100; lvlProgressBar.style.width = pct + '%'; }
+    function currentLevel(){return Math.floor(xp/200)+1}
+    function refreshCharacterByLevel(){const lvl=currentLevel();const need=lvl>=2?CHAR_LVL2:CHAR_LVL1;if(character.getAttribute('src')!==need)character.setAttribute('src',need)}
+    function refreshLevelBar(){const prog=xp%200;lvlProgressText.textContent=prog;lvlProgressBar.style.width=(prog/200*100)+'%'}
 
-    function refreshUI(){
-      levelEl.textContent = String(currentLevel());
-      refreshCharacterByLevel();
-      refreshLevelBar();
-      scoreDisplay.textContent = stars; scoreBig.textContent = stars;
-      if(walletStars) walletStars.textContent = stars + ' ⭐';
-      energyLevelDisplay.textContent = Math.floor(energy);
-      if(maxEnergyDisplay) maxEnergyDisplay.textContent = maxEnergy;
-      energyBar.style.width = (energy/maxEnergy*100) + '%';
-      if(statPerClick) statPerClick.textContent = perClick;
-      if(statRegen) statRegen.textContent = regenPerSec;
-      if(statMaxEnergy) statMaxEnergy.textContent = maxEnergy;
-      if(costClick) costClick.textContent = priceClick;
-      if(costMax) costMax.textContent = priceMax;
-      if(costRegen) costRegen.textContent = priceRegen;
-      if(costBgSpan) costBgSpan.textContent = priceBg;
-      if(btnApplyBg) btnApplyBg.disabled = !ownedBgAlt;
-      if(appliedBg==='alt'){ bgAlt.style.opacity=1; bgRoom.style.opacity=0; bgAlt.classList.add('dim-3'); } else { bgAlt.style.opacity=0; bgRoom.style.opacity=1; bgAlt.classList.remove('dim-3'); }
-    }
+    function refreshUI(){levelEl.textContent=String(currentLevel());refreshCharacterByLevel();refreshLevelBar();scoreDisplay.textContent=stars;scoreBig.textContent=stars;if(walletStars)walletStars.textContent=stars+' ⭐';energyLevelDisplay.textContent=Math.floor(energy);if(maxEnergyDisplay)maxEnergyDisplay.textContent=maxEnergy;energyBar.style.width=(energy/maxEnergy*100)+'%';if(statPerClick)statPerClick.textContent=perClick;if(statRegen)statRegen.textContent=regenPerSec;if(statMaxEnergy)statMaxEnergy.textContent=maxEnergy;if(costClick)costClick.textContent=priceClick;if(costMax)costMax.textContent=priceMax;if(costRegen)costRegen.textContent=priceRegen;if(costBgSpan)costBgSpan.textContent=priceBg;if(btnApplyBg)btnApplyBg.disabled=!ownedBgAlt;if(appliedBg==='alt'){bgAlt.style.opacity=1;bgRoom.style.opacity=0;bgAlt.classList.add('dim-3')}else{bgAlt.style.opacity=0;bgRoom.style.opacity=1;bgAlt.classList.remove('dim-3')}}
     refreshUI();
 
-    function showFloatingCoin(evt){
-      const el=document.createElement('div'); el.className='floating-coin';
-      el.innerHTML='+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';
-      const rect=wrapper.getBoundingClientRect();
-      const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-rect.left;
-      const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-rect.top-20;
-      el.style.left=(cx+(Math.random()*24-12))+'px'; el.style.top=cy+'px';
-      wrapper.appendChild(el); setTimeout(()=>el.remove(),1000);
-    }
+    function showFloatingCoin(evt){const el=document.createElement('div');el.className='floating-coin';el.innerHTML='+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';const rect=wrapper.getBoundingClientRect();const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-rect.left;const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-rect.top-20;el.style.left=(cx+(Math.random()*24-12))+'px';el.style.top=cy+'px';wrapper.appendChild(el);setTimeout(()=>el.remove(),1000)}
+    function gainStars(a){stars+=a;xp+=a}
+    function onClickCharacter(e){if(energy>=1){gainStars(perClick);energy-=1;showFloatingCoin(e);refreshUI();saveState()}}
+    character.addEventListener('mousedown',onClickCharacter);character.addEventListener('touchstart',e=>{e.preventDefault();onClickCharacter(e)});
 
-    function gainStars(amount){ stars+=amount; xp+=amount; }
+    setInterval(()=>{if(energy<maxEnergy){energy+=regenPerSec/2;if(energy>maxEnergy)energy=maxEnergy;refreshUI()}},500);
 
-    function onClickCharacter(e){ if(energy>=1){ gainStars(perClick); energy-=1; showFloatingCoin(e); refreshUI(); saveState(); } }
-    character.addEventListener('mousedown', onClickCharacter);
-    character.addEventListener('touchstart', e=>{ e.preventDefault(); onClickCharacter(e); });
-
-    setInterval(()=>{ if(energy<maxEnergy){ energy+=regenPerSec/2; if(energy>maxEnergy) energy=maxEnergy; refreshUI(); } },500);
-    setInterval(saveState,5000);
-    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
-    window.addEventListener('beforeunload', saveState);
-
-    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-    const screens = { income: document.getElementById('screen-income'), upgrades: document.getElementById('screen-upgrades'), game: document.getElementById('screen-game'), wallet: document.getElementById('screen-wallet'), friends: document.getElementById('screen-friends'), quests: document.getElementById('screen-quests') };
-    function hideAllScreens(){ Object.values(screens).forEach(el=>{ if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); } }); gameRoot.classList.remove('scene-dim'); }
-    function setActiveBtn(btn){ tabButtons.forEach(b=>b.setAttribute('aria-selected','false')); if(btn) btn.setAttribute('aria-selected','true'); }
-    function openScreenById(id){ hideAllScreens(); const el=document.getElementById(id); if(el){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); gameRoot.classList.add('scene-dim'); } }
-    function closeScreens(){ hideAllScreens(); setActiveBtn(null); }
-    tabButtons.forEach(btn=>btn.addEventListener('click',()=>{ const id=btn.getAttribute('data-screen'); const el=document.getElementById(id); const opened=el && el.classList.contains('active'); if(opened){ closeScreens(); } else { openScreenById(id); setActiveBtn(btn); } }));
+    // Tabs (сокращено)
+    const tabButtons=[...document.querySelectorAll('.tab-btn')];
+    const screens={income:document.getElementById('screen-income'),upgrades:document.getElementById('screen-upgrades'),game:document.getElementById('screen-game'),wallet:document.getElementById('screen-wallet'),friends:document.getElementById('screen-friends'),quests:document.getElementById('screen-quests')};
+    function hideAllScreens(){Object.values(screens).forEach(el=>{if(el){el.classList.remove('active');el.setAttribute('aria-hidden','true')}});gameRoot.classList.remove('scene-dim')}
+    function setActiveBtn(btn){tabButtons.forEach(b=>b.setAttribute('aria-selected','false'));if(btn)btn.setAttribute('aria-selected','true')}
+    function openScreenById(id){hideAllScreens();const el=document.getElementById(id);if(el){el.classList.add('active');el.setAttribute('aria-hidden','false');gameRoot.classList.add('scene-dim')}}
+    function closeScreens(){hideAllScreens();setActiveBtn(null)}
+    tabButtons.forEach(btn=>btn.addEventListener('click',()=>{const id=btn.getAttribute('data-screen');const el=document.getElementById(id);const opened=el&&el.classList.contains('active');if(opened){closeScreens()}else{openScreenById(id);setActiveBtn(btn)}}));
     document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeScreens(); });
 
-    function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); saveState(); return true;} return false; }
-    btnBuyClick?.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); saveState(); } });
-    btnBuyMax?.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); saveState(); } });
-    btnBuyRegen?.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); saveState(); } });
-    btnBuyBg?.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); saveState(); } });
-    btnApplyBg?.addEventListener('click', ()=>{ if(!ownedBgAlt) return; if(appliedBg==='room'){ bgAlt.style.opacity=1; bgRoom.style.opacity=0; appliedBg='alt'; bgAlt.classList.add('dim-3'); } else { bgAlt.style.opacity=0; bgRoom.style.opacity=1; appliedBg='room'; bgAlt.classList.remove('dim-3'); } saveState(); });
+    // Покупки
+    function tryBuy(cost){if(stars>=cost){stars-=cost;refreshUI();saveState();return true}return false}
+    btnBuyClick?.addEventListener('click',()=>{if(tryBuy(priceClick)){perClick+=1;priceClick=Math.ceil(priceClick*1.6);refreshUI();saveState()}});
+    btnBuyMax?.addEventListener('click',()=>{if(tryBuy(priceMax)){maxEnergy+=10;energy=Math.min(maxEnergy,energy+10);priceMax=Math.ceil(priceMax*1.6);refreshUI();saveState()}});
+    btnBuyRegen?.addEventListener('click',()=>{if(tryBuy(priceRegen)){regenPerSec=Math.round((regenPerSec+0.5)*10)/10;priceRegen=Math.ceil(priceRegen*1.6);refreshUI();saveState()}});
+    btnBuyBg?.addEventListener('click',()=>{if(ownedBgAlt)return;if(tryBuy(priceBg)){ownedBgAlt=true;btnApplyBg.disabled=false;priceBg=Math.ceil(priceBg*1.6);refreshUI();saveState()}});
+    btnApplyBg?.addEventListener('click',()=>{if(!ownedBgAlt)return;if(appliedBg==='room'){bgAlt.style.opacity=1;bgRoom.style.opacity=0;appliedBg='alt';bgAlt.classList.add('dim-3')}else{bgAlt.style.opacity=0;bgRoom.style.opacity=1;appliedBg='room';bgAlt.classList.remove('dim-3')}saveState()});
 
-    resetBtn?.addEventListener('click', ()=>{
-      stars = 0; xp = 0; energy = 100; maxEnergy = 100; perClick = 1; regenPerSec = 1;
-      priceClick = 20; priceMax = 30; priceRegen = 25; priceBg = 200;
-      ownedBgAlt = false; appliedBg = 'room';
-      try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
-      refreshUI();
-    });
-
-    // ===== СЛОТЫ =====
-    const SPIN_COST = 5; const COOLDOWN_MS = 900;
-    const symbols = [
-      {emoji:'🍒', weight:24, payout3:15},
-      {emoji:'🍋', weight:20, payout3:20},
-      {emoji:'🍉', weight:14, payout3:40},
-      {emoji:'🍇', weight:10, payout3:60},
-      {emoji:'🍀', weight:16, payout3:30},
-      {emoji:'🍑', weight:12, payout3:35},
-      {emoji:'7️⃣', weight:4,  payout3:250}
-    ];
-    const reelsEls = [document.getElementById('reel0'), document.getElementById('reel1'), document.getElementById('reel2')];
-    const spinBtn = document.getElementById('spinBtn');
-    const paytable = document.getElementById('paytable');
-    const paytableBtn = document.getElementById('paytableBtn');
-    const cooldownText = document.getElementById('cooldownText');
-    const winBanner = document.getElementById('slotsWinBanner');
-    paytableBtn?.addEventListener('click',()=>{ paytable.classList.toggle('hidden'); });
-
-    const CELL_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h')) || 88;
-    const LOOPS = 8;
-    const reels = reelsEls.map(el=>({el, arr:[], current:0}));
-    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
-    function buildReel(data){ const base=[]; for(let n=0;n<LOOPS;n++){ for(const s of symbols){ base.push(s.emoji); } } shuffle(base); data.arr=base; data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join(''); data.el.style.transform=`translateY(${-data.current*CELL_H}px)`; }
+    // Слоты (логика как раньше)
+    const SPIN_COST=5,COOLDOWN_MS=900;const symbols=[{emoji:'🍒',weight:24,payout3:15},{emoji:'🍋',weight:20,payout3:20},{emoji:'🍉',weight:14,payout3:40},{emoji:'🍇',weight:10,payout3:60},{emoji:'🍀',weight:16,payout3:30},{emoji:'🍑',weight:12,payout3:35},{emoji:'7️⃣',weight:4,payout3:250}];
+    const reelsEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
+    const spinBtn=document.getElementById('spinBtn');const paytable=document.getElementById('paytable');const paytableBtn=document.getElementById('paytableBtn');const cooldownText=document.getElementById('cooldownText');const winBanner=document.getElementById('slotsWinBanner');
+    paytableBtn?.addEventListener('click',()=>{paytable.classList.toggle('hidden')});
+    const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88;const LOOPS=8;const reels=reelsEls.map(el=>({el,arr:[],current:0}));
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+    function buildReel(data){const base=[];for(let n=0;n<LOOPS;n++){for(const s of symbols){base.push(s.emoji)}}shuffle(base);data.arr=base;data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join('');data.el.style.transform=`translateY(${-data.current*CELL_H}px)`}
     reels.forEach(buildReel);
-
-    function weightedPickIdx(){ const total=symbols.reduce((a,s)=>a+s.weight,0); let r=Math.random()*total; for(let i=0;i<symbols.length;i++){ r-=symbols[i].weight; if(r<=0) return i; } return symbols.length-1; }
-    function ensureTargetIndex(data, symbol, startIndex){ let idx=data.arr.indexOf(symbol,startIndex); if(idx!==-1) return idx; const extra=[]; for(let k=0;k<symbols.length*3;k++){ extra.push(symbols[k%symbols.length].emoji); } extra.push(symbol); data.arr.push(...extra); const frag=document.createDocumentFragment(); extra.forEach(e=>{ const d=document.createElement('div'); d.className='cell'; d.textContent=e; frag.appendChild(d); }); data.el.appendChild(frag); return data.arr.length-1; }
-    function outcomePay(a,b,c){ if(a===b&&b===c){const s=symbols.find(x=>x.emoji===a);return s?s.payout3:0;} if(a===b||a===c||b===c){ const two7=[a,b,c].filter(x=>x==='7️⃣').length===2; return two7?40:5;} return 0; }
-    function showWin(val){ if(val<=0) return; winBanner.textContent=`+${0} ⭐`; winBanner.classList.add('show'); let cur=0; const step=Math.max(1,Math.floor(val/20)); const t=setInterval(()=>{ cur=Math.min(val,cur+step); winBanner.textContent=`+${cur} ⭐`; if(cur>=val){ clearInterval(t); setTimeout(()=>winBanner.classList.remove('show'),900);} },30);}    
-    let spinning=false; let lastSpin=0;
-    function spin(){ if(spinning) return; const now=Date.now(); if(now-lastSpin<COOLDOWN_MS){ cooldownText.textContent='Подождите…'; return; } if(stars<SPIN_COST){ cooldownText.textContent='Нужно 5 ⭐'; return; } stars-=SPIN_COST; refreshUI(); saveState(); spinning=true; lastSpin=now; cooldownText.textContent='Крутится…'; const targets=[weightedPickIdx(),weightedPickIdx(),weightedPickIdx()].map(i=>symbols[i].emoji); const durations=[]; const finalIndices=[]; const results=[]; reels.forEach((data,ri)=>{ const turnsBase=24+ri*8; const jitter=Math.floor(Math.random()*symbols.length); const start=data.current+turnsBase+jitter; const targetIdx=ensureTargetIndex(data,targets[ri],start); finalIndices[ri]=targetIdx; results[ri]=targets[ri]; const dur=1.0+ri*0.2; durations[ri]=dur; data.el.style.transition='none'; data.el.style.transform=`translateY(${-data.current*CELL_H}px)`; requestAnimationFrame(()=>{ data.el.style.transition=`transform ${dur}s cubic-bezier(.12,.68,.08,1)`; data.el.style.transform=`translateY(${-targetIdx*CELL_H}px)`; }); }); const totalTime=Math.max(...durations)*1000+120; setTimeout(()=>{ reels.forEach((data,ri)=>{ data.current=finalIndices[ri]; }); const gain=outcomePay(results[0],results[1],results[2]); if(gain>0){ gainStars(gain); showWin(gain);} refreshUI(); saveState(); spinning=false; cooldownText.textContent='Готово к спину'; }, totalTime); }
-    spinBtn?.addEventListener('click', spin);
-
-    // Квесты: награда идёт и в кошелёк, и в опыт
-    document.querySelectorAll('.quest-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const type=btn.getAttribute('data-quest');
-        if(type==='50'){ gainStars(15); btn.disabled=true; btn.textContent='Получено'; }
-        if(type==='upgrade1'){ gainStars(10); btn.disabled=true; btn.textContent='Получено'; }
-        refreshUI(); saveState();
-      });
-    });
+    function weightedPickIdx(){const total=symbols.reduce((a,s)=>a+s.weight,0);let r=Math.random()*total;for(let i=0;i<symbols.length;i++){r-=symbols[i].weight;if(r<=0)return i}return symbols.length-1}
+    function ensureTargetIndex(data,symbol,start){let idx=data.arr.indexOf(symbol,start);if(idx!==-1)return idx;const extra=[];for(let k=0;k<symbols.length*3;k++){extra.push(symbols[k%symbols.length].emoji)}extra.push(symbol);data.arr.push(...extra);const frag=document.createDocumentFragment();extra.forEach(e=>{const d=document.createElement('div');d.className='cell';d.textContent=e;frag.appendChild(d)});data.el.appendChild(frag);return data.arr.length-1}
+    function outcomePay(a,b,c){if(a===b&&b===c){const s=symbols.find(x=>x.emoji===a);return s?s.payout3:0}if(a===b||a===c||b===c){const two7=[a,b,c].filter(x=>x==='7️⃣').length===2;return two7?40:5}return 0}
+    function showWin(val){if(val<=0)return;winBanner.textContent=`+${0} ⭐`;winBanner.classList.add('show');let cur=0;const step=Math.max(1,Math.floor(val/20));const t=setInterval(()=>{cur=Math.min(val,cur+step);winBanner.textContent=`+${cur} ⭐`;if(cur>=val){clearInterval(t);setTimeout(()=>winBanner.classList.remove('show'),900)}},30)}
+    let spinning=false,lastSpin=0;function spin(){if(spinning)return;const now=Date.now();if(now-lastSpin<COOLDOWN_MS){cooldownText.textContent='Подождите…';return}if(stars<SPIN_COST){cooldownText.textContent='Нужно 5 ⭐';return}stars-=SPIN_COST;refreshUI();saveState();spinning=true;lastSpin=now;cooldownText.textContent='Крутится…';const targets=[weightedPickIdx(),weightedPickIdx(),weightedPickIdx()].map(i=>symbols[i].emoji);const durations=[],finalIdx=[],res=[];reels.forEach((data,ri)=>{const turnsBase=24+ri*8;const jitter=Math.floor(Math.random()*symbols.length);const start=data.current+turnsBase+jitter;const tIdx=ensureTargetIndex(data,targets[ri],start);finalIdx[ri]=tIdx;res[ri]=targets[ri];const dur=1.0+ri*0.2;durations[ri]=dur;data.el.style.transition='none';data.el.style.transform=`translateY(${-data.current*CELL_H}px)`;requestAnimationFrame(()=>{data.el.style.transition=`transform ${dur}s cubic-bezier(.12,.68,.08,1)`;data.el.style.transform=`translateY(${-tIdx*CELL_H}px)`})});const totalTime=Math.max(...durations)*1000+120;setTimeout(()=>{reels.forEach((d,i)=>d.current=finalIdx[i]);const gain=outcomePay(res[0],res[1],res[2]);if(gain>0){gainStars(gain);showWin(gain)}refreshUI();saveState();spinning=false;cooldownText.textContent='Готово к спину'},totalTime)}
+    document.getElementById('spinBtn')?.addEventListener('click',spin);
   </script>
 </body>
 </html>
