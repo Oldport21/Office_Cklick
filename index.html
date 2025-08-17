@@ -20,12 +20,13 @@
     .dim-3{filter:brightness(0.97)}
     .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:rgba(0,0,0,.28)}
 
-    /* Платформа как раньше (200x60), ниже пола */
+    /* Платформа */
     .podium{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
 
-    /* Персонаж опущен так, чтобы стоял на платформе. Мягкое приземление. */
-    .character{position:relative;top:16px;cursor:pointer;transition:transform .1s ease-in-out;user-select:none;z-index:6;animation:land .6s cubic-bezier(.2,.9,.2,1) 60ms both}
-    .character:active{transform:scale(.98)}
+    /* Персонаж: мягкое приземление + отдельные longhands для нажатия */
+    .character{position:relative;top:16px;cursor:pointer;user-select:none;z-index:6;animation:land .6s cubic-bezier(.2,.9,.2,1) 60ms both;translate:0 0;scale:1;transition:translate .1s ease-in-out, scale .1s ease-in-out}
+    .character:active{translate:0 6px;scale:.98}
+    .character.pressed{translate:0 6px;scale:.98}
 
     @keyframes land{0%{transform:translateY(-24px) scale(1.02);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
 
@@ -45,7 +46,7 @@
     .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
     .scene-dim .center-area{filter:blur(1px) brightness(.92)}
 
-    /* Слот‑машина (без изменений логики) */
+    /* Слот-машина */
     .slots-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
     .slots-box{position:relative;width:300px;border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
     .slots-window{position:relative;overflow:hidden;height:var(--cell-h);background:rgba(0,0,0,.25);border-radius:12px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.14)}
@@ -115,13 +116,13 @@
         </div>
       </main>
 
-      <!-- Экраны ... (Доход, Улучшения, Игра/Слоты, Кошелёк, Друзья, Задания) -->
+      <!-- Экраны -->
       <section id="screen-income" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="space-y-2 text-sm">
-          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Звёзд за клик</span><strong id="stat-per-click">1</strong></div>
-          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Восстановление энергии / сек</span><strong id="stat-regen">1</strong></div>
-          <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Макс. энергия</span><strong id="stat-max-energy">100</strong></div>
+          <div class="flex justify_between bg-white/10 p-3 rounded-lg"><span>Звёзд за клик</span><strong id="stat-per-click">1</strong></div>
+          <div class="flex justify_between bg-white/10 p-3 rounded-lg"><span>Восстановление энергии / сек</span><strong id="stat-regen">1</strong></div>
+          <div class="flex justify_between bg-white/10 p-3 rounded-lg"><span>Макс. энергия</span><strong id="stat-max-energy">100</strong></div>
         </div>
       </section>
 
@@ -163,7 +164,7 @@
       </section>
 
       <section id="screen-game" class="screen" aria-hidden="true">
-        <div class="screen-title"><h2 class="text-xl font-bold">Игра: Слот‑машина</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+        <div class="screen-title"><h2 class="text-xl font-bold">Игра: Слот-машина</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="slots-wrap">
           <div class="slots-box">
             <div class="slots-window">
@@ -217,12 +218,12 @@
       <section id="screen-quests" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Задания</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="space-y-2 text-sm">
-          <div class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Сделай 50 кликов</span><button data-quest="50" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 15 ⭐</button></div>
-          <div class="bg-white/10 p-3 rounded-lg flex items-center justify-between"><span>Купи 1 улучшение</span><button data-quest="upgrade1" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 10 ⭐</button></div>
+          <div class="bg-white/10 p-3 rounded-lg flex items-center justify_between"><span>Сделай 50 кликов</span><button data-quest="50" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 15 ⭐</button></div>
+          <div class="bg-white/10 p-3 rounded-lg flex items-center justify_between"><span>Купи 1 улучшение</span><button data-quest="upgrade1" class="quest-btn px-3 py-1 rounded-md bg-rose-500/40 hover:bg-rose-500/60">Забрать 10 ⭐</button></div>
         </div>
       </section>
 
-      <!-- Нижнее меню: одинаковая структура, подпись снизу -->
+      <!-- Нижнее меню -->
       <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
         <nav class="flex justify-around items-end">
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
@@ -260,7 +261,8 @@
     const CHAR_LVL1='https://i.postimg.cc/fLpZNSq3/3.png';
     const CHAR_LVL2='https://i.postimg.cc/0NBQgS0S/2.png';
     function saveState(){const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,priceBg,ownedBgAlt,appliedBg,ts:Date.now()};try{localStorage.setItem(SAVE_KEY,JSON.stringify(p));}catch(e){}}
-    function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;priceBg=d.priceBg??priceBg;ownedBgAlt=!!d.ownedBgAlt;appliedBg=(d.appliedBg==='alt')?'alt':'room';const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec);}}catch(e){}if(!ownedBgAlt&&priceBg<200)priceBg=200}
+    function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;priceBg=d.priceBg??priceBg;ownedBgAlt=!!d.ownedBgAlt;appliedBg=(d.appliedBg==='alt')?'alt':'room';const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec);}}catch(e){}
+      if(!ownedBgAlt&&priceBg<200)priceBg=200}
     loadState();
 
     const wrapper=document.getElementById('wrapper');
@@ -289,6 +291,7 @@
     const costBgSpan=document.getElementById('cost-bg');
     const bgRoom=document.getElementById('bg-room');
     const bgAlt=document.getElementById('bg-alt');
+    const resetBtn=document.getElementById('reset-progress');
 
     function currentLevel(){return Math.floor(xp/200)+1}
     function refreshCharacterByLevel(){const lvl=currentLevel();const need=lvl>=2?CHAR_LVL2:CHAR_LVL1;if(character.getAttribute('src')!==need)character.setAttribute('src',need)}
@@ -300,11 +303,19 @@
     function showFloatingCoin(evt){const el=document.createElement('div');el.className='floating-coin';el.innerHTML='+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';const rect=wrapper.getBoundingClientRect();const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-rect.left;const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-rect.top-20;el.style.left=(cx+(Math.random()*24-12))+'px';el.style.top=cy+'px';wrapper.appendChild(el);setTimeout(()=>el.remove(),1000)}
     function gainStars(a){stars+=a;xp+=a}
     function onClickCharacter(e){if(energy>=1){gainStars(perClick);energy-=1;showFloatingCoin(e);refreshUI();saveState()}}
-    character.addEventListener('mousedown',onClickCharacter);character.addEventListener('touchstart',e=>{e.preventDefault();onClickCharacter(e)});
+
+    function pressDown(){character.classList.add('pressed')}
+    function pressUp(){character.classList.remove('pressed')}
+    character.addEventListener('mousedown',e=>{pressDown();onClickCharacter(e)});
+    character.addEventListener('mouseup',pressUp);
+    character.addEventListener('mouseleave',pressUp);
+    character.addEventListener('touchstart',e=>{e.preventDefault();pressDown();onClickCharacter(e)},{passive:false});
+    character.addEventListener('touchend',pressUp);
+    character.addEventListener('touchcancel',pressUp);
 
     setInterval(()=>{if(energy<maxEnergy){energy+=regenPerSec/2;if(energy>maxEnergy)energy=maxEnergy;refreshUI()}},500);
 
-    // Tabs (сокращено)
+    // Tabs
     const tabButtons=[...document.querySelectorAll('.tab-btn')];
     const screens={income:document.getElementById('screen-income'),upgrades:document.getElementById('screen-upgrades'),game:document.getElementById('screen-game'),wallet:document.getElementById('screen-wallet'),friends:document.getElementById('screen-friends'),quests:document.getElementById('screen-quests')};
     function hideAllScreens(){Object.values(screens).forEach(el=>{if(el){el.classList.remove('active');el.setAttribute('aria-hidden','true')}});gameRoot.classList.remove('scene-dim')}
@@ -322,13 +333,22 @@
     btnBuyBg?.addEventListener('click',()=>{if(ownedBgAlt)return;if(tryBuy(priceBg)){ownedBgAlt=true;btnApplyBg.disabled=false;priceBg=Math.ceil(priceBg*1.6);refreshUI();saveState()}});
     btnApplyBg?.addEventListener('click',()=>{if(!ownedBgAlt)return;if(appliedBg==='room'){bgAlt.style.opacity=1;bgRoom.style.opacity=0;appliedBg='alt';bgAlt.classList.add('dim-3')}else{bgAlt.style.opacity=0;bgRoom.style.opacity=1;appliedBg='room';bgAlt.classList.remove('dim-3')}saveState()});
 
-    // Слоты (логика как раньше)
+    // Сброс прогресса
+    resetBtn?.addEventListener('click',()=>{
+      stars=0; xp=0; energy=100; maxEnergy=100; perClick=1; regenPerSec=1;
+      priceClick=20; priceMax=30; priceRegen=25; priceBg=200;
+      ownedBgAlt=false; appliedBg='room';
+      try{ localStorage.removeItem(SAVE_KEY) }catch(e){}
+      refreshUI(); saveState();
+    });
+
+    // Слоты
     const SPIN_COST=5,COOLDOWN_MS=900;const symbols=[{emoji:'🍒',weight:24,payout3:15},{emoji:'🍋',weight:20,payout3:20},{emoji:'🍉',weight:14,payout3:40},{emoji:'🍇',weight:10,payout3:60},{emoji:'🍀',weight:16,payout3:30},{emoji:'🍑',weight:12,payout3:35},{emoji:'7️⃣',weight:4,payout3:250}];
     const reelsEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
     const spinBtn=document.getElementById('spinBtn');const paytable=document.getElementById('paytable');const paytableBtn=document.getElementById('paytableBtn');const cooldownText=document.getElementById('cooldownText');const winBanner=document.getElementById('slotsWinBanner');
     paytableBtn?.addEventListener('click',()=>{paytable.classList.toggle('hidden')});
     const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88;const LOOPS=8;const reels=reelsEls.map(el=>({el,arr:[],current:0}));
-    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
     function buildReel(data){const base=[];for(let n=0;n<LOOPS;n++){for(const s of symbols){base.push(s.emoji)}}shuffle(base);data.arr=base;data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join('');data.el.style.transform=`translateY(${-data.current*CELL_H}px)`}
     reels.forEach(buildReel);
     function weightedPickIdx(){const total=symbols.reduce((a,s)=>a+s.weight,0);let r=Math.random()*total;for(let i=0;i<symbols.length;i++){r-=symbols[i].weight;if(r<=0)return i}return symbols.length-1}
