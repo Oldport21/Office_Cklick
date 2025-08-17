@@ -7,32 +7,28 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Кликер" />
   <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/apple/354/star_2b50.png" />
-  <title>Кликер Персонажа — 9:16 (альт‑фон затемнён на 3%)</title>
+  <title>Кликер Персонажа — 9:16 + Слот‑машина (исправлено)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{--blur-bg:6px}
+    :root{--blur-bg:6px;--cell-h:88px}
     body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
-    /* Карточка игры 9:16 */
     .game-wrapper{position:relative;width:100%;max-width:420px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
     .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
-    .dim-3{filter:brightness(0.97)} /* на 3% темнее */
+    .dim-3{filter:brightness(0.97)}
     .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:rgba(0,0,0,.28)}
 
-    /* Персонаж и подиум */
     .podium{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
     .character{cursor:pointer;transition:transform .1s ease-in-out;user-select:none;position:relative;z-index:6}
     .character:active{transform:scale(.97)}
 
-    /* +⭐ */
     .floating-coin{position:absolute;display:flex;align-items:center;gap:6px;font-size:1.1rem;font-weight:800;color:#facc15;animation:floatUp 1s ease-out forwards;pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,.55);z-index:60}
     .floating-coin img{width:18px;height:18px}
     @keyframes floatUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-100px);opacity:0}}
     @keyframes pulse{0%,100%{filter:drop-shadow(0 0 6px #facc15) drop-shadow(0 0 12px #f59e0b)}50%{filter:drop-shadow(0 0 16px #facc15) drop-shadow(0 0 28px #f59e0b)}}
 
-    /* Экраны вкладок */
     .screen{position:absolute;left:0;right:0;bottom:72px;top:96px;margin:12px;padding:12px 12px 16px;border-radius:16px;background:rgba(0,0,0,.65);backdrop-filter:blur(var(--blur-bg));-webkit-backdrop-filter:blur(var(--blur-bg));overflow:auto;display:none;z-index:30}
     .screen.active{display:block}
     .screen, .screen *{color:#fff}
@@ -41,16 +37,27 @@
 
     .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
     .scene-dim .center-area{filter:blur(1px) brightness(.92)}
+
+    /* ==== Слот‑машина (фикс) ==== */
+    .slots-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .slots-box{position:relative;width:300px;border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
+    .slots-window{position:relative;overflow:hidden;height:var(--cell-h);background:rgba(0,0,0,.25);border-radius:12px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.14)}
+    .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:100%;padding:8px}
+    .reel{position:relative;overflow:hidden;border-radius:10px;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+    .reel-inner{position:absolute;left:0;right:0;top:0;transform:translateY(0);will-change:transform}
+    .cell{display:flex;align-items:center;justify-content:center;height:var(--cell-h);font-weight:900;font-size:52px;text-shadow:0 2px 4px rgba(0,0,0,.35)}
+    .slots-buttons{display:flex;gap:10px;justify-content:center}
+    .win-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);padding:14px 18px;border-radius:14px;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-weight:800;font-size:26px;opacity:0;pointer-events:none;z-index:3}
+    .win-banner.show{animation:popIn .7s ease forwards}
+    @keyframes popIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
   </style>
 </head>
 <body>
   <div class="game-wrapper" id="wrapper">
-    <!-- Фоны 9:16 -->
     <img id="bg-room" class="game-bg" src="https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png" alt="Фон: Комната">
     <img id="bg-alt" class="game-bg" src="https://i.postimg.cc/CKj0fd2f/Chat-GPT-Image-17-2025-01-38-13.png" alt="Фон: Новый" style="opacity:0">
 
     <div id="game" class="game-content">
-      <!-- Верхняя панель -->
       <header class="flex justify-between items-center w-full mb-2">
         <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
           <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐" class="w-5 h-5"/>
@@ -62,7 +69,6 @@
         </div>
       </header>
 
-      <!-- Центр -->
       <main class="center-area flex-grow flex flex-col items-center justify-center">
         <div class="flex items-center gap-2 mb-4">
           <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="Star Icon" class="w-10 h-10">
@@ -72,7 +78,6 @@
           <div class="podium"></div>
           <img id="character" src="https://i.postimg.cc/0NBQgS0S/2.png" alt="Игровой персонаж" class="character w-full h-full drop-shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/320x320/334155/ffffff?text=Error';">
         </div>
-        <!-- Энергия -->
         <div class="w-full max-w-xs mt-2">
           <div class="flex justify-between text-sm font-semibold mb-1 text-white">
             <span>Энергия</span>
@@ -84,7 +89,7 @@
         </div>
       </main>
 
-      <!-- Экраны вкладок -->
+      <!-- Доход -->
       <section id="screen-income" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="space-y-2 text-sm">
@@ -94,6 +99,7 @@
         </div>
       </section>
 
+      <!-- Улучшения -->
       <section id="screen-upgrades" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Улучшения</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="grid gap-3 text-sm">
@@ -131,6 +137,46 @@
         </div>
       </section>
 
+      <!-- ИГРА — Слот‑машина -->
+      <section id="screen-game" class="screen" aria-hidden="true">
+        <div class="screen-title"><h2 class="text-xl font-bold">Игра: Слот‑машина</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+
+        <div class="slots-wrap">
+          <div class="slots-box">
+            <div class="slots-window">
+              <div class="reels">
+                <div class="reel"><div class="reel-inner" id="reel0"></div></div>
+                <div class="reel"><div class="reel-inner" id="reel1"></div></div>
+                <div class="reel"><div class="reel-inner" id="reel2"></div></div>
+              </div>
+            </div>
+            <div id="slotsWinBanner" class="win-banner">+0 ⭐</div>
+          </div>
+
+          <div class="slots-buttons">
+            <button id="spinBtn" class="px-4 py-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 font-bold">SPIN (−5 ⭐)</button>
+            <button id="paytableBtn" class="px-4 py-2 rounded-lg bg-white/15 hover:bg-white/25 font-semibold">Таблица</button>
+          </div>
+          <div id="cooldownText" class="text-sm text-white/80">Готово к спину</div>
+
+          <div id="paytable" class="hidden text-sm bg-white/10 p-3 rounded-lg w-full max-w-xs">
+            <p class="font-semibold mb-1">Выплаты (3 в ряд):</p>
+            <ul class="list-disc list-inside space-y-0.5">
+              <li>🍒 ×3 → +15 ⭐</li>
+              <li>🍋 ×3 → +20 ⭐</li>
+              <li>🍉 ×3 → +40 ⭐</li>
+              <li>🍇 ×3 → +60 ⭐</li>
+              <li>🍀 ×3 → +30 ⭐</li>
+              <li>🍑 ×3 → +35 ⭐</li>
+              <li>7️⃣ ×3 → +250 ⭐</li>
+              <li>Любые 2 одинаковых → +5 ⭐</li>
+              <li>Два 7️⃣ → +40 ⭐</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Кошелёк -->
       <section id="screen-wallet" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Кошелёк</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="grid gap-3 text-sm">
@@ -140,6 +186,7 @@
         </div>
       </section>
 
+      <!-- Друзья -->
       <section id="screen-friends" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Друзья</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <ul class="space-y-2 text-sm">
@@ -148,6 +195,7 @@
         </ul>
       </section>
 
+      <!-- Задания -->
       <section id="screen-quests" class="screen" aria-hidden="true">
         <div class="screen-title"><h2 class="text-xl font-bold">Задания</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
         <div class="space-y-2 text-sm">
@@ -156,7 +204,7 @@
         </div>
       </section>
 
-      <!-- Футер с вкладками -->
+      <!-- Футер -->
       <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
         <nav class="flex justify-around items-center">
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
@@ -164,6 +212,9 @@
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false">
             <div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="text-xs mt-1">Улучшения</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-game" aria-selected="false">
+            <div class="p-3 bg-amber-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg></div><span class="text-xs mt-1">Игра</span>
           </button>
           <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-wallet" aria-selected="false">
             <div class="p-3 bg-green-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div><span class="text-xs mt-1">Кошелек</span>
@@ -180,45 +231,37 @@
   </div>
 
   <script>
-    // === PERSISTENCE (Сохранения на устройстве + оффлайн-рекавери энергии)
+    // ===== СЕЙВЫ =====
     const SAVE_KEY = 'clicker_save_v1';
-
     function saveState(){
-      const payload = {
-        stars, energy, maxEnergy, perClick, regenPerSec,
-        priceClick, priceMax, priceRegen, priceBg,
-        ownedBgAlt, appliedBg,
-        ts: Date.now()
-      };
+      const payload = {stars, energy, maxEnergy, perClick, regenPerSec, priceClick, priceMax, priceRegen, priceBg, ownedBgAlt, appliedBg, ts: Date.now()};
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); } catch(e) {}
     }
-
     function loadState(){
-      try {
+      try{
         const raw = localStorage.getItem(SAVE_KEY);
-        if(!raw) return;
-        const d = JSON.parse(raw);
-        if(typeof d.stars === 'number') stars = d.stars;
-        if(typeof d.energy === 'number') energy = d.energy;
-        if(typeof d.maxEnergy === 'number') maxEnergy = d.maxEnergy;
-        if(typeof d.perClick === 'number') perClick = d.perClick;
-        if(typeof d.regenPerSec === 'number') regenPerSec = d.regenPerSec;
-        if(typeof d.priceClick === 'number') priceClick = d.priceClick;
-        if(typeof d.priceMax === 'number') priceMax = d.priceMax;
-        if(typeof d.priceRegen === 'number') priceRegen = d.priceRegen;
-        if(typeof d.priceBg === 'number') priceBg = d.priceBg;
-        if(typeof d.ownedBgAlt === 'boolean') ownedBgAlt = d.ownedBgAlt;
-        if(d.appliedBg === 'room' || d.appliedBg === 'alt') appliedBg = d.appliedBg;
-
-        // Оффлайн накопление энергии с последнего визита
-        if(typeof d.ts === 'number'){
-          const secs = Math.max(0, Math.floor((Date.now() - d.ts)/1000));
-          energy = Math.min(maxEnergy, energy + secs * regenPerSec);
+        if(raw){
+          const d = JSON.parse(raw);
+          if(typeof d.stars==='number') stars=d.stars;
+          if(typeof d.energy==='number') energy=d.energy;
+          if(typeof d.maxEnergy==='number') maxEnergy=d.maxEnergy;
+          if(typeof d.perClick==='number') perClick=d.perClick;
+          if(typeof d.regenPerSec==='number') regenPerSec=d.regenPerSec;
+          if(typeof d.priceClick==='number') priceClick=d.priceClick;
+          if(typeof d.priceMax==='number') priceMax=d.priceMax;
+          if(typeof d.priceRegen==='number') priceRegen=d.priceRegen;
+          if(typeof d.priceBg==='number') priceBg=d.priceBg;
+          if(typeof d.ownedBgAlt==='boolean') ownedBgAlt=d.ownedBgAlt;
+          if(d.appliedBg==='room'||d.appliedBg==='alt') appliedBg=d.appliedBg;
+          if(typeof d.ts==='number'){
+            const secs=Math.max(0,Math.floor((Date.now()-d.ts)/1000));
+            energy=Math.min(maxEnergy, energy+secs*regenPerSec);
+          }
         }
-      } catch(e) {}
+      }catch(e){}
     }
 
-    // === DOM
+    // ===== DOM =====
     const wrapper = document.getElementById('wrapper');
     const gameRoot = document.getElementById('game');
     const character = document.getElementById('character');
@@ -227,128 +270,199 @@
     const energyBar = document.getElementById('energy-bar');
     const energyLevelDisplay = document.getElementById('energy-level');
     const maxEnergyDisplay = document.getElementById('max-energy');
-
     const walletStars = document.getElementById('wallet-stars');
     const statPerClick = document.getElementById('stat-per-click');
     const statRegen = document.getElementById('stat-regen');
     const statMaxEnergy = document.getElementById('stat-max-energy');
-
     const btnBuyClick = document.getElementById('buy-click');
     const btnBuyMax = document.getElementById('buy-max');
     const btnBuyRegen = document.getElementById('buy-regen');
-
     const costClick = document.getElementById('cost-click');
     const costMax = document.getElementById('cost-max');
     const costRegen = document.getElementById('cost-regen');
-
     const btnBuyBg = document.getElementById('buy-bg');
     const btnApplyBg = document.getElementById('apply-bg');
     const bgRoom = document.getElementById('bg-room');
     const bgAlt = document.getElementById('bg-alt');
 
-    // === State (дефолты)
+    // ===== БАЗОВОЕ СОСТОЯНИЕ =====
     let stars = 0, energy = 100, maxEnergy = 100, perClick = 1, regenPerSec = 1;
     let priceClick = 20, priceMax = 30, priceRegen = 25, priceBg = 50;
     let ownedBgAlt = false, appliedBg = 'room';
 
-    // Подгрузка сохранений до первого рендера
     loadState();
 
     function refreshUI(){
       scoreDisplay.textContent = stars; scoreBig.textContent = stars;
-      if(walletStars) walletStars.textContent = stars + ' ⭐';
+      walletStars.textContent = stars + ' ⭐';
       energyLevelDisplay.textContent = Math.floor(energy);
-      if(maxEnergyDisplay) maxEnergyDisplay.textContent = maxEnergy;
+      maxEnergyDisplay.textContent = maxEnergy;
       energyBar.style.width = (energy/maxEnergy*100) + '%';
-      if(statPerClick) statPerClick.textContent = perClick;
-      if(statRegen) statRegen.textContent = regenPerSec;
-      if(statMaxEnergy) statMaxEnergy.textContent = maxEnergy;
-      if(costClick) costClick.textContent = priceClick;
-      if(costMax) costMax.textContent = priceMax;
-      if(costRegen) costRegen.textContent = priceRegen;
-      if(btnApplyBg) btnApplyBg.disabled = !ownedBgAlt;
-
-      // Применить сохранённый фон
-      if(appliedBg === 'alt'){
-        bgAlt.style.opacity = 1; bgRoom.style.opacity = 0; bgAlt.classList.add('dim-3');
-      } else {
-        bgAlt.style.opacity = 0; bgRoom.style.opacity = 1; bgAlt.classList.remove('dim-3');
-      }
+      statPerClick.textContent = perClick;
+      statRegen.textContent = regenPerSec;
+      statMaxEnergy.textContent = maxEnergy;
+      costClick.textContent = priceClick;
+      costMax.textContent = priceMax;
+      costRegen.textContent = priceRegen;
+      btnApplyBg.disabled = !ownedBgAlt;
+      if(appliedBg==='alt'){ bgAlt.style.opacity=1; bgRoom.style.opacity=0; bgAlt.classList.add('dim-3'); } else { bgAlt.style.opacity=0; bgRoom.style.opacity=1; bgAlt.classList.remove('dim-3'); }
     }
     refreshUI();
 
-    // +⭐
     function showFloatingCoin(evt){
-      const el = document.createElement('div');
-      el.className = 'floating-coin';
-      el.innerHTML = '+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';
-      const rect = wrapper.getBoundingClientRect();
-      const cx = (evt.clientX || (evt.touches && evt.touches[0].clientX)) - rect.left;
-      const cy = (evt.clientY || (evt.touches && evt.touches[0].clientY)) - rect.top - 20;
-      el.style.left = (cx + (Math.random()*24-12))+'px';
-      el.style.top  = cy+'px';
-      wrapper.appendChild(el);
-      setTimeout(()=>el.remove(),1000);
+      const el=document.createElement('div'); el.className='floating-coin';
+      el.innerHTML='+'+perClick+' <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="⭐">';
+      const rect=wrapper.getBoundingClientRect();
+      const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-rect.left;
+      const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-rect.top-20;
+      el.style.left=(cx+(Math.random()*24-12))+'px'; el.style.top=cy+'px';
+      wrapper.appendChild(el); setTimeout(()=>el.remove(),1000);
     }
 
-    function onClickCharacter(e){
-      if(energy>=1){ stars+=perClick; energy-=1; showFloatingCoin(e); refreshUI(); saveState(); }
-    }
+    function onClickCharacter(e){ if(energy>=1){ stars+=perClick; energy-=1; showFloatingCoin(e); refreshUI(); saveState(); } }
     character.addEventListener('mousedown', onClickCharacter);
-    character.addEventListener('touchstart', (e)=>{ e.preventDefault(); onClickCharacter(e) });
+    character.addEventListener('touchstart', e=>{ e.preventDefault(); onClickCharacter(e); });
 
     setInterval(()=>{ if(energy<maxEnergy){ energy+=regenPerSec/2; if(energy>maxEnergy) energy=maxEnergy; refreshUI(); } },500);
-
-    // Автосейв каждые 5 секунд и при сворачивании
-    setInterval(saveState, 5000);
+    setInterval(saveState,5000);
     document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveState(); });
     window.addEventListener('beforeunload', saveState);
 
-    // Tabs
+    // ===== ТАБЫ =====
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-    const screens = {
-      income: document.getElementById('screen-income'),
-      upgrades: document.getElementById('screen-upgrades'),
-      wallet: document.getElementById('screen-wallet'),
-      friends: document.getElementById('screen-friends'),
-      quests: document.getElementById('screen-quests')
-    };
-    function hideAllScreens(){ Object.values(screens).forEach(el=>{ if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); } }); gameRoot.classList.remove('scene-dim'); }
+    const screens = { income: document.getElementById('screen-income'), upgrades: document.getElementById('screen-upgrades'), game: document.getElementById('screen-game'), wallet: document.getElementById('screen-wallet'), friends: document.getElementById('screen-friends'), quests: document.getElementById('screen-quests') };
+    function hideAllScreens(){ Object.values(screens).forEach(el=>{ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }); gameRoot.classList.remove('scene-dim'); }
     function setActiveBtn(btn){ tabButtons.forEach(b=>b.setAttribute('aria-selected','false')); if(btn) btn.setAttribute('aria-selected','true'); }
     function openScreenById(id){ hideAllScreens(); const el=document.getElementById(id); if(el){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); gameRoot.classList.add('scene-dim'); } }
     function closeScreens(){ hideAllScreens(); setActiveBtn(null); }
     tabButtons.forEach(btn=>btn.addEventListener('click',()=>{ const id=btn.getAttribute('data-screen'); const el=document.getElementById(id); const opened=el && el.classList.contains('active'); if(opened){ closeScreens(); } else { openScreenById(id); setActiveBtn(btn); } }));
     document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
-    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeScreens(); });
-    let tY=null; document.addEventListener('touchstart',(e)=>{tY=e.touches[0].clientY;},{passive:true});
-    document.addEventListener('touchend',(e)=>{ if(tY===null) return; const dy=e.changedTouches[0].clientY - tY; if(dy>60) closeScreens(); tY=null; });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeScreens(); });
 
-    // Upgrades
+    // ===== Апгрейды =====
     function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); saveState(); return true;} return false; }
-    if(btnBuyClick) btnBuyClick.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); saveState(); } });
-    if(btnBuyMax) btnBuyMax.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); saveState(); } });
-    if(btnBuyRegen) btnBuyRegen.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); saveState(); } });
+    btnBuyClick.addEventListener('click', ()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); saveState(); } });
+    btnBuyMax.addEventListener('click', ()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy, energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); saveState(); } });
+    btnBuyRegen.addEventListener('click', ()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); saveState(); } });
+    btnBuyBg.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); saveState(); } });
+    btnApplyBg.addEventListener('click', ()=>{ if(!ownedBgAlt) return; if(appliedBg==='room'){ bgAlt.style.opacity=1; bgRoom.style.opacity=0; appliedBg='alt'; bgAlt.classList.add('dim-3'); } else { bgAlt.style.opacity=0; bgRoom.style.opacity=1; appliedBg='room'; bgAlt.classList.remove('dim-3'); } saveState(); });
 
-    // Магазин фона — затемнение альт‑фона на 3%
-    if(btnBuyBg) btnBuyBg.addEventListener('click', ()=>{ if(ownedBgAlt) return; if(tryBuy(priceBg)){ ownedBgAlt=true; btnApplyBg.disabled=false; priceBg=Math.ceil(priceBg*1.6); refreshUI(); saveState(); } });
-    if(btnApplyBg) btnApplyBg.addEventListener('click', ()=>{
-      if(!ownedBgAlt) return;
-      if(appliedBg==='room'){
-        bgAlt.style.opacity=1; bgRoom.style.opacity=0; appliedBg='alt';
-        bgAlt.classList.add('dim-3');
-      } else {
-        bgAlt.style.opacity=0; bgRoom.style.opacity=1; appliedBg='room';
-        bgAlt.classList.remove('dim-3');
-      }
-      saveState();
-    });
+    // ===== СЛОТ‑МАШИНА (устойчивая анимация) =====
+    const SPIN_COST = 5;          // цена спина
+    const COOLDOWN_MS = 900;      // задержка между спинами
 
-    // Quests
-    document.querySelectorAll('.quest-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ const type=btn.getAttribute('data-quest'); if(type==='50'){ stars+=15; btn.disabled=true; btn.textContent='Получено'; } if(type==='upgrade1'){ stars+=10; btn.disabled=true; btn.textContent='Получено'; } refreshUI(); saveState(); });
-    });
+    const symbols = [
+      {emoji:'🍒', weight:24, payout3:15},
+      {emoji:'🍋', weight:20, payout3:20},
+      {emoji:'🍉', weight:14, payout3:40},
+      {emoji:'🍇', weight:10, payout3:60},
+      {emoji:'🍀', weight:16, payout3:30},
+      {emoji:'🍑', weight:12, payout3:35},
+      {emoji:'7️⃣', weight:4,  payout3:250}
+    ];
+
+    const reelsEls = [document.getElementById('reel0'), document.getElementById('reel1'), document.getElementById('reel2')];
+    const spinBtn = document.getElementById('spinBtn');
+    const paytable = document.getElementById('paytable');
+    const paytableBtn = document.getElementById('paytableBtn');
+    const cooldownText = document.getElementById('cooldownText');
+    const winBanner = document.getElementById('slotsWinBanner');
+    paytableBtn.addEventListener('click',()=>{ paytable.classList.toggle('hidden'); });
+
+    const CELL_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h')) || 88;
+    const LOOPS = 8; // базовые копии набора
+
+    const reels = reelsEls.map(el=>({el, arr:[], current:0}));
+
+    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+
+    function buildReel(data){
+      const base=[]; for(let n=0;n<LOOPS;n++){ for(const s of symbols){ base.push(s.emoji); } }
+      shuffle(base);
+      data.arr = base;
+      data.el.innerHTML = base.map(e=>`<div class="cell">${e}</div>`).join('');
+      data.el.style.transform = `translateY(${-data.current*CELL_H}px)`;
+    }
+
+    reels.forEach(buildReel);
+
+    function weightedPickIdx(){
+      const total = symbols.reduce((a,s)=>a+s.weight,0);
+      let r = Math.random()*total;
+      for(let i=0;i<symbols.length;i++){ r-=symbols[i].weight; if(r<=0) return i; }
+      return symbols.length-1;
+    }
+
+    function ensureTargetIndex(data, symbol, startIndex){
+      // ищем дальше по ленте
+      let idx = data.arr.indexOf(symbol, startIndex);
+      if(idx!==-1) return idx;
+      // если не нашли — допишем «хвост» и вернём последний индекс, где точно наш символ
+      const extra=[];
+      for(let k=0;k<symbols.length*3;k++){ extra.push(symbols[k%symbols.length].emoji); }
+      extra.push(symbol);
+      data.arr.push(...extra);
+      const frag=document.createDocumentFragment();
+      extra.forEach(e=>{ const d=document.createElement('div'); d.className='cell'; d.textContent=e; frag.appendChild(d); });
+      data.el.appendChild(frag);
+      return data.arr.length-1; // последний — наш целевой символ
+    }
+
+    function outcomePay(a,b,c){
+      if(a===b && b===c){ const s=symbols.find(x=>x.emoji===a); return s?s.payout3:0; }
+      if(a===b || a===c || b===c){ const two7=[a,b,c].filter(x=>x==='7️⃣').length===2; return two7?40:5; }
+      return 0;
+    }
+
+    function showWin(val){
+      if(val<=0) return;
+      winBanner.textContent = `+${0} ⭐`;
+      winBanner.classList.add('show');
+      let cur=0; const step=Math.max(1,Math.floor(val/20));
+      const t=setInterval(()=>{ cur=Math.min(val,cur+step); winBanner.textContent=`+${cur} ⭐`; if(cur>=val){ clearInterval(t); setTimeout(()=>winBanner.classList.remove('show'),900); } },30);
+    }
+
+    let spinning=false; let lastSpin=0;
+
+    function spin(){
+      if(spinning) return;
+      const now=Date.now();
+      if(now-lastSpin<COOLDOWN_MS) { cooldownText.textContent='Подождите…'; return; }
+      if(stars<SPIN_COST){ cooldownText.textContent='Нужно 5 ⭐'; return; }
+
+      stars-=SPIN_COST; refreshUI(); saveState();
+      spinning=true; lastSpin=now; cooldownText.textContent='Крутится…';
+
+      const targets=[weightedPickIdx(), weightedPickIdx(), weightedPickIdx()].map(i=>symbols[i].emoji);
+
+      const durations=[]; const finalIndices=[]; const results=[];
+      reels.forEach((data,ri)=>{
+        const turnsBase = 24 + ri*8; // базовые шаги
+        const jitter = Math.floor(Math.random()*symbols.length);
+        const start = data.current + turnsBase + jitter;
+        const targetIdx = ensureTargetIndex(data, targets[ri], start);
+        finalIndices[ri]=targetIdx; results[ri]=targets[ri];
+
+        const dur = 1.0 + ri*0.2; durations[ri]=dur;
+        data.el.style.transition = 'none';
+        // выставим текущее положение (на случай предыдущего остатка)
+        data.el.style.transform = `translateY(${-data.current*CELL_H}px)`;
+        requestAnimationFrame(()=>{
+          data.el.style.transition = `transform ${dur}s cubic-bezier(.12,.68,.08,1)`;
+          data.el.style.transform = `translateY(${-targetIdx*CELL_H}px)`;
+        });
+      });
+
+      const totalTime = Math.max(...durations)*1000 + 120;
+      setTimeout(()=>{
+        reels.forEach((data,ri)=>{ data.current = finalIndices[ri]; });
+        const gain = outcomePay(results[0], results[1], results[2]);
+        if(gain>0){ stars+=gain; showWin(gain); }
+        refreshUI(); saveState(); spinning=false; cooldownText.textContent='Готово к спину';
+      }, totalTime);
+    }
+
+    document.getElementById('spinBtn').addEventListener('click', spin);
   </script>
 </body>
 </html>
-
-
