@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Кликер" />
+  <link rel="apple-touch-icon" href="https://em-content.zobj.net/source/apple/354/star_2b50.png" />
+  <title>Кликер — без лагов, слоты и ракета</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{--blur-bg:6px;--cell-h:88px}
+    body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
+    .game-wrapper{position:relative;width:100%;max-width:420px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+    .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
+    .dim-3{filter:brightness(0.97)}
+    .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:rgba(0,0,0,.28)}
+
+    .preloader{position:absolute;inset:0;background:#0b1026;display:flex;align-items:center;justify-content:center;z-index:120;transition:opacity .35s ease}
+    .preloader.hidden{opacity:0;pointer-events:none;visibility:hidden;display:none}
+    .preloader-box{display:flex;flex-direction:column;align-items:center;gap:18px;width:82%;max-width:320px;text-align:center}
+    .preloader-logo{width:72px;height:72px;display:grid;place-items:center;border-radius:18px;background:rgba(255,255,255,.06);box-shadow:0 8px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08)}
+    .preloader-spinner{width:54px;height:54px;border-radius:9999px;border:4px solid rgba(255,255,255,.18);border-top-color:#facc15;animation:spin 1s linear infinite;filter:drop-shadow(0 0 8px rgba(250,204,21,.4))}
+    .preloader-title{font-weight:800;font-size:18px;color:#fff}
+    .preloader-sub{font-size:12px;color:rgba(255,255,255,.75)}
+    .preloader-bar{width:100%;height:10px;background:rgba(255,255,255,.1);border-radius:9999px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+    .preloader-fill{height:100%;width:0%;background:linear-gradient(90deg,#fde047,#f59e0b);border-radius:9999px;transition:width .16s ease}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .podium{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
+
+    .character{position:relative;top:16px;cursor:pointer;user-select:none;z-index:6;animation:land .6s cubic-bezier(.2,.9,.2,1) 60ms both;transition:transform .1s ease-in-out}
+    .character:active,.character.pressed{transform:translateY(6px) scale(.98)!important}
+    @keyframes land{0%{transform:translateY(-24px) scale(1.02);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
+
+    .big-score{margin-top:-10px}
+    .floating-coin{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font-size:1.1rem;font-weight:800;color:#facc15;pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,.55);z-index:60;opacity:0;will-change:transform,opacity}
+    .floating-coin img{width:18px;height:18px}
+    @keyframes floatUp{from{opacity:1;transform:translate(var(--x,0), var(--y,0))}to{opacity:0;transform:translate(var(--x,0), calc(var(--y,0) - 100px))}}
+    @keyframes pulse{0%,100%{filter:drop-shadow(0 0 8px #facc15) drop-shadow(0 0 14px #f59e0b)}50%{filter:drop-shadow(0 0 18px #facc15) drop-shadow(0 0 30px #f59e0b)}}
+
+    .screen{position:absolute;left:0;right:0;bottom:72px;top:122px;margin:12px;padding:12px 12px 16px;border-radius:16px;background:rgba(0,0,0,.65);backdrop-filter:blur(var(--blur-bg));-webkit-backdrop-filter:blur(var(--blur-bg));overflow:auto;display:none;z-index:30}
+    .screen.active{display:block}
+    .screen, .screen *{color:#fff}
+    .screen-title{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0));padding:6px 0 10px;z-index:1}
+    .screen-close{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.12)}
+    .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
+    .scene-dim .center-area{filter:blur(1px) brightness(.92)}
+
+    .slots-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .slots-box{position:relative;width:300px;border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
+    .slots-window{position:relative;overflow:hidden;height:var(--cell-h);background:rgba(0,0,0,.25);border-radius:12px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.14)}
+    .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:100%;padding:8px}
+    .reel{position:relative;overflow:hidden;border-radius:10px;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+    .reel-inner{position:absolute;left:0;right:0;top:0;transform:translateY(0);will-change:transform}
+    .cell{display:flex;align-items:center;justify-content:center;height:var(--cell-h);font-weight:900;font-size:52px;text-shadow:0 2px 4px rgba(0,0,0,.35)}
+    .slots-buttons{display:flex;gap:10px;justify-content:center}
+    .win-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.7);padding:14px 18px;border-radius:14px;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-weight:800;font-size:26px;opacity:0;pointer-events:none;z-index:3}
+    .win-banner.show{animation:popIn .7s ease forwards}
+    @keyframes popIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+    .rocket-stage{position:relative;width:300px;height:190px;border-radius:16px;background:linear-gradient(180deg,rgba(16,20,45,.9),rgba(10,14,32,.9));box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.5);overflow:hidden}
+    .rocket-sky{position:absolute;inset:-14%;will-change:transform;background:
+      radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.35),transparent 60%),
+      radial-gradient(2px 2px at 70% 20%,rgba(255,255,255,.25),transparent 60%),
+      radial-gradient(2px 2px at 40% 70%,rgba(255,255,255,.3),transparent 60%),
+      linear-gradient(180deg,rgba(20,24,50,.8),rgba(10,12,30,.9));
+      filter:brightness(.95)
+    }
+    .rocket-curve{position:absolute;left:0;bottom:12px;width:100%;height:2px;background:linear-gradient(90deg,rgba(156,163,175,.1),rgba(168,85,247,.9));opacity:.7;transform-origin:left bottom}
+    .rocket-mult{position:absolute;top:10px;left:0;right:0;text-align:center;font-weight:800;font-size:34px;color:#c084fc;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+    .rocket-sprite{position:absolute;left:12px;bottom:12px;width:44px;height:44px;filter:drop-shadow(0 0 10px rgba(255,160,64,.55)) drop-shadow(0 0 18px rgba(168,85,247,.4));transform:translate(0,0) rotate(14deg);will-change:transform}
+    .rocket-sprite .r-ship{position:absolute;inset:0;display:grid;place-items:center;font-size:44px}
+    .rocket-sprite .r-boom{position:absolute;inset:0;display:grid;place-items:center;font-size:44px;opacity:0}
+    .rocket-sprite.boom .r-ship{opacity:0}
+    .rocket-sprite.boom .r-boom{opacity:1}
+    .rocket-sprite.shake{animation:shake .35s ease-in-out 2}
+    @keyframes shake{0%,100%{transform:translate(0,0) rotate(14deg)}25%{transform:translate(4px,-3px) rotate(16deg)}50%{transform:translate(-3px,5px) rotate(10deg)}75%{transform:translate(2px,-2px) rotate(15deg)}}
+    .rocket-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-weight:800;opacity:0;pointer-events:none}
+    .rocket-banner.show{animation:rbIn .6s ease forwards}
+    @keyframes rbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+
+    .intro{position:absolute;inset:0;z-index:200;background:linear-gradient(180deg,rgba(5,7,18,.9),rgba(11,16,38,.88));display:none}
+    .intro.show{display:block}
+    .intro-wrap{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:center;justify-content:center;padding:16px}
+    .intro-card{width:100%;max-width:420px;display:grid;grid-template-columns:58% 42%;gap:14px;align-items:center;background:rgba(255,255,255,.06);border-radius:16px;padding:12px 16px 12px 12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.5)}
+    .intro-ava{width:100%;aspect-ratio:1/1;display:block;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(0,0,0,.55));transform:scale(1.5);transform-origin:center bottom}
+    .intro-bubble{position:relative;background:rgba(0,0,0,.5);padding:10px;border-radius:10px;margin-left:-14px;margin-right:10px}
+    .intro-bubble:before{content:"";position:absolute;left:-10px;top:18px;width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:8px solid rgba(0,0,0,.5)}
+    .intro-title{font-weight:800;font-size:20px;margin-bottom:6px}
+    .intro-text{font-size:13px;opacity:.95}
+    .intro-actions{display:flex;gap:8px;margin-top:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;font-weight:800}
+    .btn-primary{background:#f59e0b;color:#0b1026}
+    .btn-ghost{background:rgba(255,255,255,.14)}
+    .intro-skip{font-size:12px;opacity:.8;text-decoration:underline;margin-left:auto}
+    @media (max-width:420px){.intro-card{grid-template-columns:60% 40%;}}
+  </style>
+</head>
+<body>
+<div class="game-wrapper" id="wrapper">
+  <!-- АУДИО: трек из /github/music/music_game.mp3 -->
+  <audio id="bgm" src="github/music/music_game.mp3" preload="auto" loop></audio>
+  <audio id="sfx-click" src="github/music/click.mp3" preload="auto"></audio>
+
+  <div id="preloader" class="preloader" aria-live="polite" aria-busy="true">
+    <div class="preloader-box">
+      <div class="preloader-logo">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#facc15" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.173L12 18.896l-7.336 3.274 1.402-8.173L.132 9.21l8.2-1.192L12 .587z"/></svg>
+      </div>
+      <div class="preloader-spinner" aria-hidden="true"></div>
+      <div class="preloader-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="preloader-fill" class="preloader-fill"></div></div>
+      <div class="preloader-title">Загрузка…</div>
+      <div class="preloader-sub">Готовим комнату и мини-игры</div>
+    </div>
+  </div>
+
+  <section id="intro" class="intro" aria-hidden="true">
+    <div class="intro-wrap">
+      <div class="intro-card">
+        <img src="https://i.postimg.cc/rwFbVPMr/vera-1-Photoroom.png" alt="Вера" class="intro-ava">
+        <div class="intro-bubble">
+          <div class="intro-title">Привет! Я Вера 👋</div>
+          <div class="intro-text">
+            <ul class="list-disc list-inside space-y-1">
+              <li>Кликай по герою — копи <b>💵</b> и опыт.</li>
+              <li>Каждые <b>200 опыта</b> — новый фон и герой (до 7).</li>
+            </ul>
+            <div class="intro-actions">
+              <button id="intro-start" class="btn btn-primary">Погнали!</button>
+              <button id="intro-never" class="intro-skip">Скрыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <img id="bg" class="game-bg" src="https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png" alt="Фон: Уровень">
+
+  <div id="game" class="game-content">
+    <header class="flex justify-between items-center w-full mb-2">
+      <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/></svg>
+          <span class="text-white/90 text-sm">LVL</span>
+          <span id="level" class="font-extrabold">1</span>
+        </div>
+        <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
+          <span class="w-5 h-5 grid place-items-center font-extrabold">💵</span>
+          <span id="score" class="font-bold text-lg">0</span>
+        </div>
+
+        <button id="music-btn" class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full" title="Музыка">
+          <span id="music-icon" class="w-5 h-5 grid place-items-center">🔈</span>
+          <span class="text-sm">Музыка</span>
+        </button>
+        <button id="sound-btn" class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full" title="Звук">
+          <span class="w-5 h-5 grid place-items-center">🎚️</span>
+          <span class="text-sm">Звук</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="sound-panel" class="absolute left-3 right-3 top-20 z-40 bg-black/70 backdrop-blur p-3 rounded-xl hidden">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-sm">Громкость музыки</span>
+        <input id="vol-music" type="range" min="0" max="1" step="0.01" value="0.7" class="w-40">
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm">Громкость клика</span>
+        <input id="vol-sfx" type="range" min="0" max="1" step="0.01" value="0.4" class="w-40">
+      </div>
+    </div>
+
+    <div class="w-full px-1 mb-2">
+      <div class="flex items-center justify-between text-xs text-white/80 mb-1">
+        <span>До следующего уровня</span>
+        <span><span id="lvl-progress">0</span> / 200</span>
+      </div>
+      <div class="w-full bg-white/10 rounded-full h-2"><div id="lvl-progress-bar" class="h-2 bg-sky-400 rounded-full" style="width:0%"></div></div>
+    </div>
+
+    <main class="center-area flex-grow flex flex-col items-center justify-center">
+      <div class="big-score flex items-center gap-2 mb-2">
+        <span class="w-10 h-10 grid place-items-center text-3xl font-extrabold leading-none">💵</span>
+        <span id="score-big" class="text-5xl font-bold">0</span>
+      </div>
+
+      <div class="relative w-80 h-80 md:w-96 md:h-96 mb-6">
+        <div class="podium"></div>
+        <img id="character" src="https://i.postimg.cc/zXWCKfvw/image.png" alt="Игровой персонаж" class="character w-full h-full drop-shadow-lg">
+      </div>
+
+      <div class="w-full max-w-xs mt-1">
+        <div class="flex justify-between text-sm font-semibold mb-1 text-white">
+          <span>Энергия</span><span><span id="energy-level">100</span> / <span id="max-energy">100</span></span>
+        </div>
+        <div class="w-full bg-black/60 rounded-full h-4"><div id="energy-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-4 rounded-full" style="width:100%"></div></div>
+      </div>
+    </main>
+
+    <section id="screen-income" class="screen" aria-hidden="true">
+      <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>💵 за клик</span><strong id="stat-per-click">1</strong></div>
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Восстановление энергии / сек</span><strong id="stat-regen">1</strong></div>
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Макс. энергия</span><strong id="stat-max-energy">100</strong></div>
+      </div>
+    </section>
+
+    <section id="screen-upgrades" class="screen" aria-hidden="true">
+      <div class="screen-title"><h2 class="text-xl font-bold">Улучшения</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+      <div class="grid gap-3 text-sm">
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div>
+            <button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button>
+          </div>
+        </div>
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div>
+            <button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button>
+          </div>
+        </div>
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div>
+            <button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-game" class="screen" aria-hidden="true">
+      <div class="screen-title"><h2 class="text-xl font-bold">Игра</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+      <div class="flex gap-2 mb-3">
+        <button id="tabMiniSlots" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold outline outline-1 outline-white/10">Слоты</button>
+        <button id="tabMiniRocket" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold outline outline-1 outline-white/10">Ракета</button>
+      </div>
+
+      <div id="gameSlots" class="slots-wrap">
+        <div class="slots-box">
+          <div class="slots-window">
+            <div class="reels">
+              <div class="reel"><div class="reel-inner" id="reel0"></div></div>
+              <div class="reel"><div class="reel-inner" id="reel1"></div></div>
+              <div class="reel"><div class="reel-inner" id="reel2"></div></div>
+            </div>
+          </div>
+          <div id="slotsWinBanner" class="win-banner">+0 💵</div>
+        </div>
+        <div class="slots-buttons">
+          <button id="spinBtn" class="px-4 py-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 font-bold">SPIN (−5 💵)</button>
+          <button id="paytableBtn" class="px-4 py-2 rounded-lg bg-white/15 hover:bg-white/25 font-semibold">Таблица</button>
+        </div>
+        <div id="cooldownText" class="text-sm text-white/80">Готово к спину</div>
+        <div id="paytable" class="hidden text-sm bg-white/10 p-3 rounded-lg w-full max-w-xs">
+          <p class="font-semibold mb-1">Выплаты (3 в ряд):</p>
+          <ul class="list-disc list-inside space-y-0.5">
+            <li>🍒 ×3 → +15 💵</li>
+            <li>🍋 ×3 → +20 💵</li>
+            <li>🍉 ×3 → +40 💵</li>
+            <li>🍇 ×3 → +60 💵</li>
+            <li>🍀 ×3 → +30 💵</li>
+            <li>🍑 ×3 → +35 💵</li>
+            <li>7️⃣ ×3 → +250 💵</li>
+            <li>Любые 2 одинаковых → +5 💵</li>
+            <li>Два 7️⃣ → +40 💵</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="gameRocket" class="hidden">
+        <div class="flex flex-col items-center gap-3">
+          <div class="rocket-stage">
+            <div class="rocket-sky"></div>
+            <div class="rocket-curve" id="rocketCurve"></div>
+            <div id="rocketMult" class="rocket-mult">x1.00</div>
+            <div id="rocketSprite" class="rocket-sprite" aria-live="polite">
+              <span class="r-ship">🚀</span>
+              <span class="r-boom">💥</span>
+            </div>
+            <div id="rocketBanner" class="rocket-banner"></div>
+          </div>
+
+          <div class="w-full max-w-xs grid gap-2">
+            <div class="flex justify-between items-center bg-white/10 p-2 rounded-lg">
+              <label class="text-sm">Ставка</label>
+              <div class="flex items-center gap-2">
+                <button id="rBetMinus" class="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20">−10</button>
+                <input id="rocketBet" class="w-20 bg-black/40 px-2 py-1 rounded-md text-right font-semibold" type="number" value="20" min="1" step="1"/>
+                <span class="text-sm">💵</span>
+                <button id="rBetPlus" class="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20">+10</button>
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center bg-white/10 p-2 rounded-lg">
+              <label class="text-sm">Автовывод</label>
+              <div class="flex items-center gap-2">
+                <input id="rocketAuto" class="w-20 bg-black/40 px-2 py-1 rounded-md text-right font-semibold" type="number" value="0" min="0" step="0.01"/>
+                <span class="text-sm">×</span>
+                <button id="rAuto2" class="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20">x2</button>
+                <button id="rAuto3" class="px-2 py-1 text-sm rounded-md bg-white/10 hover:bg-white/20">x3</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button id="rocketStart" class="px-3 py-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 font-extrabold">СТАРТ</button>
+              <button id="rocketCashout" class="px-3 py-2 rounded-lg bg-emerald-500/70 hover:bg-emerald-500 font-extrabold">ВЫВЕСТИ</button>
+            </div>
+
+            <p id="rocketHint" class="text-xs text-white/70 text-center">Нажми «СТАРТ», множитель растёт. Успей «ВЫВЕСТИ» до взрыва!</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <section id="screen-wallet" class="screen" aria-hidden="true">
+      <div class="screen-title"><h2 class="text-xl font-bold">Кошелёк</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+      <div class="grid gap-3 text-sm">
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Баланс денег</span><strong id="wallet-stars">0 💵</strong></div>
+        <button id="reset-progress" class="mt-2 px-3 py-2 rounded-lg bg-red-500/70 hover:bg-red-500 text-white font-semibold">Сбросить прогресс (деньги и уровень)</button>
+      </div>
+    </section>
+
+    <section id="screen-donates" class="screen" aria-hidden="true">
+      <div class="screen-title">
+        <h2 class="text-xl font-bold">Донаты (Telegram ⭐)</h2>
+        <button class="screen-close" data-close>✕ Закрыть</button>
+      </div>
+      <div class="grid gap-3 text-sm">
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg">
+          <span>Баланс звёзд Telegram</span>
+          <strong id="tg-stars-balance">0 ⭐</strong>
+        </div>
+
+        <div class="grid gap-2">
+          <div class="flex flex-wrap gap-2">
+            <button class="donate-btn px-3 py-2 rounded-lg bg-purple-500/80 hover:bg-purple-500 text-white font-semibold" data-amt="10">Задонатить 10 ⭐</button>
+            <button class="donate-btn px-3 py-2 rounded-lg bg-purple-500/80 hover:bg-purple-500 text-white font-semibold" data-amt="50">Задонатить 50 ⭐</button>
+            <button class="donate-btn px-3 py-2 rounded-lg bg-purple-500/80 hover:bg-purple-500 text-white font-semibold" data-amt="100">Задонатить 100 ⭐</button>
+          </div>
+          <p class="text-xs text-white/60">Оплата откроется в Telegram. После успешного платежа баланс ⭐ увеличится автоматически.</p>
+        </div>
+
+        <div class="bg-white/5 rounded-lg p-3">
+          <div class="flex items-center justify-between">
+            <div class="font-semibold">Настройки донатов</div>
+            <button id="donate-settings-toggle" class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs">⚙️ Открыть</button>
+          </div>
+
+          <div id="donate-settings" class="mt-2 hidden grid gap-2">
+            <p class="text-xs text-white/70">Два варианта: <b>вставь готовые ссылки</b> на инвойсы Stars (10/50/100), либо <b>укажи URL своего сервера</b> — игра сама запросит ссылку через <code>/invoice?amount=...</code>.</p>
+
+            <div class="mt-1 p-2 rounded bg-white/5">
+              <div class="font-semibold mb-1">Ручные ссылки (Stars инвойсы)</div>
+              <label class="grid gap-1">
+                <span class="text-xs">Инвойс 10 ⭐</span>
+                <input id="invoice-10" class="bg-black/40 px-2 py-1 rounded" />
+              </label>
+              <label class="grid gap-1">
+                <span class="text-xs">Инвойс 50 ⭐</span>
+                <input id="invoice-50" class="bg-black/40 px-2 py-1 rounded" />
+              </label>
+              <label class="grid gap-1">
+                <span class="text-xs">Инвойс 100 ⭐</span>
+                <input id="invoice-100" class="bg-black/40 px-2 py-1 rounded" />
+              </label>
+            </div>
+
+            <div class="mt-2 p-2 rounded bg-white/5">
+              <div class="font-semibold mb-1">Адрес бэкенда (опционально)</div>
+              <label class="grid gap-1">
+                <span class="text-xs">URL сервера (пример: https://abc.ngrok-free.app)</span>
+                <input id="donate-backend" class="bg-black/40 px-2 py-1 rounded" />
+              </label>
+              <label class="mt-1 inline-flex items-center gap-2 text-sm">
+                <input id="donate-use-backend" type="checkbox" class="scale-110" />
+                <span>Получать ссылки с сервера</span>
+              </label>
+            </div>
+
+            <div class="flex gap-2 mt-2">
+              <button id="donate-settings-save" class="px-3 py-2 rounded bg-emerald-500/80 hover:bg-emerald-500 text-white text-sm font-semibold">Сохранить</button>
+              <button id="donate-settings-clear" class="px-3 py-2 rounded bg-red-500/70 hover:bg-red-500 text-white text-sm font-semibold">Очистить</button>
+            </div>
+
+            <p class="text-[11px] text-white/60">Stars: <code>currency: "XTR"</code>, <code>provider_token: ""</code> (пусто). Можно без сервера — вручную. С сервером игра вызывает <code>GET /invoice?amount=10|50|100</code> и открывает полученный URL.</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="tg-add-10" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">+10 ⭐ (тест локально)</button>
+          <button id="tg-reset" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Сбросить</button>
+        </div>
+        <p class="text-xs text-white/70">⭐ копятся локально и независимы от 💵. В Telegram Mini App кнопки откроют инвойсы через <code>WebApp.openInvoice</code>.</p>
+      </div>
+    </section>
+
+    <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
+      <nav class="flex justify-around items-end">
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
+          <div class="p-3 bg-yellow-500/20 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <span class="text-xs mt-1">Доход</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false">
+          <div class="p-3 bg-blue-500/20 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <span class="text-xs mt-1">Улучшения</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-game" aria-selected="false">
+          <div class="p-3 bg-amber-500/20 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg>
+          </div>
+          <span class="text-xs mt-1">Игра</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-wallet" aria-selected="false">
+          <div class="p-3 bg-green-500/20 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-300"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <span class="text-xs mt-1">Кошелёк</span>
+        </button>
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-donates" aria-selected="false">
+          <div class="p-3 bg-purple-500/20 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+          </div>
+          <span class="text-xs mt-1">Донаты</span>
+        </button>
+      </nav>
+    </footer>
+  </div>
+</div>
+
+<script>
+  const SAVE_KEY='clicker_save_v3';
+  let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
+  let telegramStars=0;
+  let priceClick=20,priceMax=30,priceRegen=25;
+
+  // ====== АУДИО ======
+  const bgm=document.getElementById('bgm');
+  const sfxClick=document.getElementById('sfx-click');
+  const musicBtn=document.getElementById('music-btn');
+  const musicIcon=document.getElementById('music-icon');
+  const soundBtn=document.getElementById('sound-btn');
+  const soundPanel=document.getElementById('sound-panel');
+  const volMusic=document.getElementById('vol-music');
+  const volSfx=document.getElementById('vol-sfx');
+
+  const AUDIO_KEY='audio_prefs_v2';
+  let audioPrefs={musicVol:0.7,sfxVol:0.4,musicOn:true};
+  try{const raw=localStorage.getItem(AUDIO_KEY);if(raw){const j=JSON.parse(raw);audioPrefs={...audioPrefs,...j}}}catch(e){}
+
+  if(bgm) bgm.volume=audioPrefs.musicVol;
+  if(sfxClick) sfxClick.volume=audioPrefs.sfxVol;
+
+  function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(e){}}
+  function updateMusicIcon(){ if(!bgm) return; musicIcon.textContent=(audioPrefs.musicOn && !bgm.paused)?'🔊':'🔈'; }
+
+  if(volMusic) volMusic.value=String(audioPrefs.musicVol);
+  if(volSfx) volSfx.value=String(audioPrefs.sfxVol);
+
+  musicBtn?.addEventListener('click', async ()=>{
+    if(!bgm) return;
+    audioPrefs.musicOn=!audioPrefs.musicOn;
+    if(audioPrefs.musicOn){ try{ await bgm.play(); }catch(e){} }
+    else{ bgm.pause(); }
+    saveAudio();
+    updateMusicIcon();
+  });
+
+  soundBtn?.addEventListener('click',()=>{ soundPanel?.classList.toggle('hidden'); });
+
+  volMusic?.addEventListener('input',()=>{
+    const v=Math.min(1,Math.max(0,parseFloat(volMusic.value||'0')));
+    audioPrefs.musicVol=v; if(bgm) bgm.volume=v; saveAudio();
+  });
+  volSfx?.addEventListener('input',()=>{
+    const v=Math.min(1,Math.max(0,parseFloat(volSfx.value||'0')));
+    audioPrefs.sfxVol=v; if(sfxClick) sfxClick.volume=v; saveAudio();
+  });
+
+  function playClickSfx(){
+    if(!sfxClick) return;
+    const now=performance.now();
+    if(playClickSfx._t && now-playClickSfx._t<70) return; // анти-спам
+    playClickSfx._t=now;
+    try{ sfxClick.currentTime=0; sfxClick.volume=audioPrefs.sfxVol; sfxClick.play(); }catch(e){}
+  }
+
+  updateMusicIcon();
+
+  const BG_BY_LEVEL=[
+    'https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png',
+    'https://i.postimg.cc/yxDKJ5Tx/Chat-GPT-Image-18-2025-03-14-02.png',
+    'https://i.postimg.cc/CKj0fd2f/Chat-GPT-Image-17-2025-01-38-13.png',
+    'https://i.postimg.cc/3JD7YsRb/image.png',
+    'https://i.postimg.cc/br4h1T6T/be0fa4b1-51fa-428b-9ad8-341d140dc290.png',
+    'https://i.postimg.cc/ZYQ4kbTd/image.png',
+    'https://i.postimg.cc/mDXRgRCK/Chat-GPT-Image-18-2025-04-38-22.png'
+  ];
+  const CHAR_BY_LEVEL=[
+    'https://i.postimg.cc/zXWCKfvw/image.png',
+    'https://i.postimg.cc/8CkM2BHw/image.png',
+    'https://i.postimg.cc/jqDQqcrF/image.png',
+    'https://i.postimg.cc/XYk91Dwp/image.png',
+    'https://i.postimg.cc/yNfcsgpK/image.png',
+    'https://i.postimg.cc/y62hDR1Y/image.png',
+    'https://i.postimg.cc/XXMvn404/image.png'
+  ];
+  const INTRO_VERA='https://i.postimg.cc/rwFbVPMr/vera-1-Photoroom.png';
+
+  function assetByLevelClamp(arr,lvl){const i=Math.min(arr.length-1,Math.max(1,lvl)-1);return arr[i]}
+
+  function saveState(){const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ts:Date.now()};try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}}
+  let _saveTimer=null,_saveAgain=false;function queueSave(immediate=false){if(immediate){saveState();return}if(_saveTimer){_saveAgain=true;return}_saveTimer=setTimeout(()=>{saveState();_saveTimer=null;if(_saveAgain){_saveAgain=false;queueSave()}},380)}
+  window.addEventListener('pagehide',()=>queueSave(true));
+
+  function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec);}}catch(e){}}
+  loadState();
+
+  const wrapper=document.getElementById('wrapper');
+  const gameRoot=document.getElementById('game');
+  const character=document.getElementById('character');
+  const levelEl=document.getElementById('level');
+  const lvlProgressText=document.getElementById('lvl-progress');
+  const lvlProgressBar=document.getElementById('lvl-progress-bar');
+  const scoreDisplay=document.getElementById('score');
+  const scoreBig=document.getElementById('score-big');
+  const energyBar=document.getElementById('energy-bar');
+  const energyLevelDisplay=document.getElementById('energy-level');
+  const maxEnergyDisplay=document.getElementById('max-energy');
+  const walletStars=document.getElementById('wallet-stars');
+  const statPerClick=document.getElementById('stat-per-click');
+  const statRegen=document.getElementById('stat-regen');
+  const statMaxEnergy=document.getElementById('stat-max-energy');
+  const btnBuyClick=document.getElementById('buy-click');
+  const btnBuyMax=document.getElementById('buy-max');
+  const btnBuyRegen=document.getElementById('buy-regen');
+  const costClick=document.getElementById('cost-click');
+  const costMax=document.getElementById('cost-max');
+  const costRegen=document.getElementById('cost-regen');
+  const resetBtn=document.getElementById('reset-progress');
+  const preloader=document.getElementById('preloader');
+  const preloaderFill=document.getElementById('preloader-fill');
+  const bg=document.getElementById('bg');
+  const tgStarsBalance=document.getElementById('tg-stars-balance');
+  const tgAdd10=document.getElementById('tg-add-10');
+  const tgReset=document.getElementById('tg-reset');
+  const intro=document.getElementById('intro');
+  const introStart=document.getElementById('intro-start');
+  const introNever=document.getElementById('intro-never');
+
+  function openIntro(){ if(!intro) return; intro.classList.add('show'); intro.setAttribute('aria-hidden','false'); }
+  function closeIntro(){ if(!intro) return; intro.classList.remove('show'); intro.setAttribute('aria-hidden','true'); }
+  function showIntro(){ openIntro(); }
+  introStart?.addEventListener('click',()=>{ closeIntro(); });
+  introNever?.addEventListener('click',()=>{ closeIntro(); });
+  window.showIntro = showIntro;
+
+  function currentLevel(){return Math.floor(xp/200)+1}
+  function refreshCharacterByLevel(){const need=assetByLevelClamp(CHAR_BY_LEVEL,currentLevel());if(character.getAttribute('src')!==need)character.setAttribute('src',need)}
+  function refreshBackgroundByLevel(){const need=assetByLevelClamp(BG_BY_LEVEL,currentLevel());if(bg.getAttribute('src')!==need)bg.setAttribute('src',need)}
+  function refreshLevelBar(){const prog=xp%200;lvlProgressText.textContent=prog;lvlProgressBar.style.width=(prog/200*100)+'%'}
+  function refreshUI(){
+    levelEl.textContent=String(currentLevel());
+    refreshCharacterByLevel();
+    refreshBackgroundByLevel();
+    refreshLevelBar();
+    scoreDisplay.textContent=stars;scoreBig.textContent=stars;
+    if(walletStars)walletStars.textContent=stars+' 💵';
+    if(tgStarsBalance)tgStarsBalance.textContent=telegramStars+' ⭐';
+    energyLevelDisplay.textContent=Math.floor(energy);
+    if(maxEnergyDisplay)maxEnergyDisplay.textContent=maxEnergy;
+    energyBar.style.width=(energy/maxEnergy*100)+'%';
+    if(statPerClick)statPerClick.textContent=perClick;
+    if(statRegen)statRegen.textContent=regenPerSec;
+    if(statMaxEnergy)statMaxEnergy.textContent=maxEnergy;
+    if(costClick)costClick.textContent=priceClick;
+    if(costMax)costMax.textContent=priceMax;
+    if(costRegen)costRegen.textContent=priceRegen;
+  }
+  refreshUI();
+  updateMusicIcon();
+
+  let wrapperRect=wrapper.getBoundingClientRect();
+  function updateWrapperRect(){wrapperRect=wrapper.getBoundingClientRect()}
+  window.addEventListener('resize',updateWrapperRect,{passive:true});
+  window.addEventListener('scroll',updateWrapperRect,{passive:true});
+
+  const COIN_POOL=12;const coinPool=[];let coinPtr=0;
+  for(let i=0;i<COIN_POOL;i++){const el=document.createElement('div');el.className='floating-coin';el.innerHTML='<span class="coin-text">+1</span> <span class="font-extrabold">💵</span>';wrapper.appendChild(el);coinPool.push(el)}
+  function animateCoin(el,x,y,val){el.querySelector('.coin-text').textContent='+'+val;el.style.setProperty('--x',(x|0)+'px');el.style.setProperty('--y',(y|0)+'px');el.style.animation='none';void el.offsetWidth;el.style.animation='floatUp 1s ease-out forwards'}
+  function showFloatingCoin(evt){const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-wrapperRect.left;const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-wrapperRect.top-20;const el=coinPool[coinPtr++%COIN_POOL];animateCoin(el,cx+(Math.random()*24-12),cy,perClick)}
+
+  function gainStars(a){stars+=a;xp+=a}
+  function onClickCharacter(e){
+    if(energy>=1){
+      gainStars(perClick);
+      energy-=1;
+      showFloatingCoin(e);
+      playClickSfx();
+      refreshUI();
+      queueSave();
+    }
+  }
+  function pressDown(){character.classList.add('pressed')}
+  function pressUp(){character.classList.remove('pressed')}
+  character.addEventListener('mousedown',e=>{pressDown();onClickCharacter(e)});
+  character.addEventListener('mouseup',pressUp);
+  character.addEventListener('mouseleave',pressUp);
+  character.addEventListener('touchstart',e=>{e.preventDefault();pressDown();onClickCharacter(e)},{passive:false});
+  character.addEventListener('touchend',pressUp);
+  character.addEventListener('touchcancel',pressUp);
+
+  setInterval(()=>{if(energy<maxEnergy){energy+=regenPerSec/2;if(energy>maxEnergy)energy=maxEnergy;refreshUI()}},500);
+
+  const tabButtons=[...document.querySelectorAll('.tab-btn')];
+  const screens={income:document.getElementById('screen-income'),upgrades:document.getElementById('screen-upgrades'),game:document.getElementById('screen-game'),wallet:document.getElementById('screen-wallet'),donates:document.getElementById('screen-donates')};
+  function hideAllScreens(){Object.values(screens).forEach(el=>{if(el){el.classList.remove('active');el.setAttribute('aria-hidden','true')}});gameRoot.classList.remove('scene-dim')}
+  function setActiveBtn(btn){tabButtons.forEach(b=>b.setAttribute('aria-selected','false'));if(btn)btn.setAttribute('aria-selected','true')}
+  function openScreenById(id){hideAllScreens();const el=document.getElementById(id);if(el){el.classList.add('active');el.setAttribute('aria-hidden','false');gameRoot.classList.add('scene-dim')}}
+  function closeScreens(){hideAllScreens();setActiveBtn(null)}
+  tabButtons.forEach(btn=>btn.addEventListener('click',()=>{const id=btn.getAttribute('data-screen');const el=document.getElementById(id);const opened=el&&el.classList.contains('active');if(opened){closeScreens()}else{openScreenById(id);setActiveBtn(btn)}}));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
+
+  function tryBuy(cost){if(stars>=cost){stars-=cost;refreshUI();queueSave();return true}return false}
+  btnBuyClick?.addEventListener('click',()=>{if(tryBuy(priceClick)){perClick+=1;priceClick=Math.ceil(priceClick*1.6);refreshUI();queueSave(true)}});
+  btnBuyMax?.addEventListener('click',()=>{if(tryBuy(priceMax)){maxEnergy+=10;energy=Math.min(maxEnergy,energy+10);priceMax=Math.ceil(priceMax*1.6);refreshUI();queueSave(true)}});
+  btnBuyRegen?.addEventListener('click',()=>{if(tryBuy(priceRegen)){regenPerSec=Math.round((regenPerSec+0.5)*10)/10;priceRegen=Math.ceil(priceRegen*1.6);refreshUI();queueSave(true)}});
+
+  resetBtn?.addEventListener('click',()=>{stars=0;xp=0;energy=100;maxEnergy=100;perClick=1;regenPerSec=1;priceClick=20;priceMax=30;priceRegen=25;try{localStorage.removeItem(SAVE_KEY)}catch(e){}refreshUI();queueSave(true)});
+
+  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  const LINKS_KEY='donate_links_v1';
+  function loadLinks(){ try{const raw=localStorage.getItem(LINKS_KEY);return raw?JSON.parse(raw):{}}catch(e){return {}} }
+  function saveLinks(obj){ try{localStorage.setItem(LINKS_KEY,JSON.stringify(obj||{}))}catch(e){} }
+  const BACKEND_URL_KEY='donate_backend_url_v1';
+  const USE_BACKEND_KEY='donate_use_backend_v1';
+
+  const settingsToggle=document.getElementById('donate-settings-toggle');
+  const settingsPanel=document.getElementById('donate-settings');
+  const input10=document.getElementById('invoice-10');
+  const input50=document.getElementById('invoice-50');
+  const input100=document.getElementById('invoice-100');
+  const inputBackend=document.getElementById('donate-backend');
+  const inputUseBackend=document.getElementById('donate-use-backend');
+  const settingsSave=document.getElementById('donate-settings-save');
+  const settingsClear=document.getElementById('donate-settings-clear');
+
+  const donateLinks=loadLinks();
+  if(input10) input10.value = donateLinks['10'] || '';
+  if(input50) input50.value = donateLinks['50'] || '';
+  if(input100) input100.value = donateLinks['100'] || '';
+  if(inputBackend) inputBackend.value = localStorage.getItem(BACKEND_URL_KEY)||'';
+  if(inputUseBackend) inputUseBackend.checked = (localStorage.getItem(USE_BACKEND_KEY)==='1');
+
+  settingsToggle?.addEventListener('click',()=>{settingsPanel.classList.toggle('hidden')});
+  settingsSave?.addEventListener('click',()=>{
+    const obj={'10': (input10?.value||'').trim(),'50': (input50?.value||'').trim(),'100': (input100?.value||'').trim(),};
+    saveLinks(obj);
+    if(inputBackend){ localStorage.setItem(BACKEND_URL_KEY, (inputBackend.value||'').trim()); }
+    if(inputUseBackend){ localStorage.setItem(USE_BACKEND_KEY, inputUseBackend.checked ? '1' : '0'); }
+    alert('Настройки донатов сохранены.');
+  });
+  settingsClear?.addEventListener('click',()=>{
+    saveLinks({});
+    if(input10) input10.value='';
+    if(input50) input50.value='';
+    if(input100) input100.value='';
+    if(inputBackend) { inputBackend.value=''; localStorage.removeItem(BACKEND_URL_KEY); }
+    if(inputUseBackend) { inputUseBackend.checked=false; localStorage.removeItem(USE_BACKEND_KEY); }
+    alert('Ссылки и настройки сервера очищены.');
+  });
+
+  function openStarsInvoice(amount){
+    const useBackend = (localStorage.getItem(USE_BACKEND_KEY)==='1');
+    const backendUrl = (localStorage.getItem(BACKEND_URL_KEY)||'').trim();
+    const manualUrl = (loadLinks()[String(amount)]||'').trim();
+
+    const tryServer = async()=>{
+      if(!useBackend || !backendUrl) return '';
+      try{
+        const base = backendUrl.replace(/\/$/,'');
+        const r = await fetch(`${base}/invoice?amount=${encodeURIComponent(amount)}`);
+        const data = await r.json().catch(()=>({}));
+        if(data && typeof data.result==='string') return data.result;
+        if(typeof data==='string') return data;
+        return '';
+      }catch(e){ console.warn('Сервер недоступен', e); return ''; }
+    };
+
+    (async()=>{
+      let url = await tryServer();
+      if(!url) url = manualUrl;
+      if(!url){
+        alert('Нет ссылки на инвойс для '+amount+'⭐. Заполни в настройках или укажи URL сервера.');
+        return;
+      }
+      if(tg && typeof tg.openInvoice==='function'){
+        try{
+          tg.openInvoice(url, (status)=>{
+            if(status==='paid'){
+              telegramStars += amount;
+              refreshUI();
+              queueSave(true);
+              if(tg.showAlert) tg.showAlert('Спасибо! Оплачено: +'+amount+'⭐');
+            }else if(status==='cancelled'){
+              if(tg.showAlert) tg.showAlert('Платёж отменён');
+            } else if(status==='failed'){
+              if(tg.showAlert) tg.showAlert('Ошибка платежа');
+            }
+          });
+        }catch(err){ console.error(err); alert('Не удалось открыть инвойс в Telegram.'); }
+      }else{
+        window.open(url, '_blank');
+      }
+    })();
+  }
+
+  document.querySelectorAll('.donate-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const amt=parseInt(btn.getAttribute('data-amt'),10)||0;
+      if(amt>0) openStarsInvoice(amt);
+    })
+  });
+  tgAdd10?.addEventListener('click',()=>{telegramStars+=10;refreshUI();queueSave(true)});
+  tgReset?.addEventListener('click',()=>{telegramStars=0;refreshUI();queueSave(true)});
+  if(tg && typeof tg.onEvent==='function'){
+    tg.onEvent('invoiceClosed', (obj)=>{ console.log('invoiceClosed:', obj); });
+  }
+
+  const SPIN_COST=5,COOLDOWN_MS=900;
+  const symbols=[{emoji:'🍒',weight:24,payout3:15},{emoji:'🍋',weight:20,payout3:20},{emoji:'🍉',weight:14,payout3:40},{emoji:'🍇',weight:10,payout3:60},{emoji:'🍀',weight:16,payout3:30},{emoji:'🍑',weight:12,payout3:35},{emoji:'7️⃣',weight:4,payout3:250}];
+  const reelsEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
+  const spinBtn=document.getElementById('spinBtn');
+  const paytable=document.getElementById('paytable');
+  const paytableBtn=document.getElementById('paytableBtn');
+  const cooldownText=document.getElementById('cooldownText');
+  const winBanner=document.getElementById('slotsWinBanner');
+  paytableBtn?.addEventListener('click',()=>{paytable.classList.toggle('hidden')});
+
+  const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88;const LOOPS=8;
+  const reels=reelsEls.map(el=>({el,arr:[],current:0}));
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}}
+  function buildReel(data){
+    const base=[];for(let n=0;n<LOOPS;n++){for(const s of symbols){base.push(s.emoji)}}
+    shuffle(base);
+    data.arr=base;
+    data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join('');
+    data.el.style.transform=`translateY(${-data.current*CELL_H}px)`
+  }
+  reels.forEach(buildReel);
+
+  function weightedPickIdx(){const total=symbols.reduce((a,s)=>a+s.weight,0);let r=Math.random()*total;for(let i=0;i<symbols.length;i++){r-=symbols[i].weight;if(r<=0)return i}return symbols.length-1}
+  function capReel(data){if(data.arr.length>300){data.current=0;buildReel(data)}}
+  function ensureTargetIndex(data,symbol,start){
+    let idx=data.arr.indexOf(symbol,start);
+    if(idx!==-1)return idx;
+    const extra=[];
+    for(let k=0;k<symbols.length*3;k++){extra.push(symbols[k%symbols.length].emoji)}
+    extra.push(symbol);
+    data.arr.push(...extra);
+    const frag=document.createDocumentFragment();
+    extra.forEach(e=>{const d=document.createElement('div');d.className='cell';d.textContent=e;frag.appendChild(d)});
+    data.el.appendChild(frag);
+    capReel(data);return data.arr.length-1
+  }
+  function outcomePay(a,b,c){
+    if(a===b&&b===c){const s=symbols.find(x=>x.emoji===a);return s?s.payout3:0}
+    if(a===b||a===c||b===c){const two7=[a,b,c].filter(x=>x==='7️⃣').length===2;return two7?40:5}
+    return 0
+  }
+  function showWin(val){
+    if(val<=0)return;winBanner.textContent='+0 💵';winBanner.classList.add('show');
+    let cur=0;const step=Math.max(1,Math.floor(val/12));
+    const t=setInterval(()=>{cur=Math.min(val,cur+step);winBanner.textContent=`+${cur} 💵`;if(cur>=val){clearInterval(t);setTimeout(()=>winBanner.classList.remove('show'),900)}},20)
+  }
+
+  let spinning=false,lastSpin=0;
+  function spin(){
+    if(spinning)return;const now=Date.now();if(now-lastSpin<COOLDOWN_MS){cooldownText.textContent='Подождите…';return}
+    if(stars<SPIN_COST){cooldownText.textContent='Нужно 5 💵';return}
+    stars-=SPIN_COST;refreshUI();queueSave();spinning=true;lastSpin=now;cooldownText.textContent='Крутится…';
+    const targets=[weightedPickIdx(),weightedPickIdx(),weightedPickIdx()].map(i=>symbols[i].emoji);
+    const durations=[],finalIdx=[],res=[];
+    reels.forEach((data,ri)=>{
+      const turnsBase=24+ri*8;const jitter=Math.floor(Math.random()*symbols.length);const start=data.current+turnsBase+jitter;
+      const tIdx=ensureTargetIndex(data,targets[ri],start);
+      finalIdx[ri]=tIdx;res[ri]=targets[ri];
+      const dur=1.0+ri*0.2;durations[ri]=dur;
+      data.el.style.transition='none';
+      data.el.style.transform=`translateY(${-data.current*CELL_H}px)`;
+      requestAnimationFrame(()=>{
+        data.el.style.transition=`transform ${dur}s cubic-bezier(.12,.68,.08,1)`;
+        data.el.style.transform=`translateY(${-tIdx*CELL_H}px)`
+      })
+    });
+    const totalTime=Math.max(...durations)*1000+120;
+    setTimeout(()=>{reels.forEach((d,i)=>d.current=finalIdx[i]);const gain=outcomePay(res[0],res[1],res[2]);if(gain>0){gainStars(gain);showWin(gain)}refreshUI();queueSave();spinning=false;cooldownText.textContent='Готово к спину'},totalTime)
+  }
+  spinBtn?.addEventListener('click',spin);
+
+  const rocketSprite=document.getElementById('rocketSprite');
+  const rocketMultEl=document.getElementById('rocketMult');
+  const rocketStartBtn=document.getElementById('rocketStart');
+  const rocketCashoutBtn=document.getElementById('rocketCashout');
+  const rocketBetInput=document.getElementById('rocketBet');
+  const rocketAutoInput=document.getElementById('rocketAuto');
+  const rocketBanner=document.getElementById('rocketBanner');
+  const rocketSky=document.querySelector('.rocket-sky');
+  const rocketCurve=document.getElementById('rocketCurve');
+  const rBetPlus=document.getElementById('rBetPlus');
+  const rBetMinus=document.getElementById('rBetMinus');
+  const rAuto2=document.getElementById('rAuto2');
+  const rAuto3=document.getElementById('rAuto3');
+
+  let rState='idle';
+  let rBet=0;let rStart=0;let rCrashAt=0;let rReq=0;let rMult=1.0;
+
+  function stopRocketLoop(){if(rReq){cancelAnimationFrame(rReq);rReq=0}}
+  function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+  function rReset(){
+    stopRocketLoop();rState='idle';rBet=0;rMult=1.0;
+    rocketMultEl.textContent='x1.00';
+    rocketSprite.classList.remove('shake','boom');
+    rocketSprite.style.transform='translate(0px, 0px) rotate(14deg)';
+    rocketCashoutBtn.disabled=true;rocketStartBtn.disabled=false;
+    rocketBanner.classList.remove('show');rocketBanner.style.opacity=0;
+    if(rocketSky){rocketSky.style.transform='translate(0,0)';if(rocketCurve) rocketCurve.style.transform='scaleX(1)'}
+  }
+  rReset();
+
+  function drawCrashAt(){const u=Math.random();const m=1+(-Math.log(1-u))*1.4;return Math.min(25, Math.max(1.05, +m.toFixed(2)))}
+
+  function rLoop(){
+    if(rState!=='running')return;
+    const t=(performance.now()-rStart)/1000;
+    const rate=.65; rMult=Math.exp(rate*t);
+    if(rMult>=rCrashAt){return rCrash()}
+    rocketMultEl.textContent='x'+rMult.toFixed(2);
+    const p=Math.min(1, Math.log(rMult)/Math.log(6));
+    const stageW=300, padL=12, padR=10, shipW=44;
+    const rangeX=stageW - padL - padR - shipW;
+    const x=clamp(p*rangeX, 0, rangeX);
+    const y=clamp(-p*110, -120, 0);
+    rocketSprite.style.transform=`translate(${x}px, ${y}px) rotate(14deg)`;
+    if(rocketSky){const parX=-p*60; const parY=p*14; rocketSky.style.transform=`translate(${parX}px, ${parY}px)`;}
+    if(rocketCurve){rocketCurve.style.transform=`scaleX(${1+ p*0.15}) skewX(${-6*p}deg)`}
+    const auto=parseFloat(rocketAutoInput.value||'0');
+    if(auto>=1.01 && rMult>=auto){rCashout();return}
+    rReq=requestAnimationFrame(rLoop)
+  }
+
+  function rStartRound(){
+    const v=Math.max(1, Math.floor(parseInt(rocketBetInput.value||'0',10)));
+    if(!tryBuy(v)){rFlash('Нужно больше 💵', '#f87171');return}
+    rBet=v;rCrashAt=drawCrashAt();rStart=performance.now();rState='running';
+    rocketStartBtn.disabled=true;rocketCashoutBtn.disabled=false;
+    rocketBanner.classList.remove('show');
+    stopRocketLoop();rReq=requestAnimationFrame(rLoop)
+  }
+
+  function rCashout(){
+    if(rState!=='running')return;
+    const win=Math.max(0, Math.floor(rBet*rMult));
+    gainStars(win);
+    refreshUI(); queueSave();
+    rState='cashed';
+    rocketCashoutBtn.disabled=true;
+    rocketBanner.textContent=`Вывел x${rMult.toFixed(2)} → +${win} 💵`;
+    rocketBanner.style.color='#86efac';
+    rocketBanner.classList.add('show');
+    setTimeout(()=>rReset(),1100);
+  }
+
+  function rCrash(){
+    rState='crashed';
+    rocketCashoutBtn.disabled=true;
+    rocketSprite.classList.add('boom');
+    rocketBanner.textContent=`Взорвалась на x${rMult.toFixed(2)} :(`;
+    rocketBanner.style.color='#fca5a5';
+    rocketBanner.classList.add('show');
+    setTimeout(()=>rReset(),1200);
+  }
+
+  function rFlash(text,color){
+    rocketBanner.textContent=text; rocketBanner.style.color=color||'#fff';
+    rocketBanner.classList.add('show'); setTimeout(()=>rocketBanner.classList.remove('show'),700);
+  }
+
+  rBetPlus?.addEventListener('click',()=>{
+    let v=parseInt(rocketBetInput.value||'0',10); if(!Number.isFinite(v)) v=0; v+=10; if(v<1) v=1; rocketBetInput.value=String(v);
+  });
+  rBetMinus?.addEventListener('click',()=>{
+    let v=parseInt(rocketBetInput.value||'0',10); if(!Number.isFinite(v)) v=0; v=Math.max(1, v-10); rocketBetInput.value=String(v);
+  });
+  rocketBetInput?.addEventListener('input',()=>{
+    let v=parseInt(rocketBetInput.value||'0',10); if(!Number.isFinite(v) || v<1) v=1; rocketBetInput.value=String(v);
+  });
+  rAuto2?.addEventListener('click',()=>{ rocketAutoInput.value='2'; });
+  rAuto3?.addEventListener('click',()=>{ rocketAutoInput.value='3'; });
+  rocketAutoInput?.addEventListener('input',()=>{
+    let v=parseFloat(rocketAutoInput.value||'0'); if(!Number.isFinite(v) || v<0) v=0; rocketAutoInput.value=String(v);
+  });
+  rocketStartBtn?.addEventListener('click',()=>{ if(rState==='idle') rStartRound(); });
+  rocketCashoutBtn?.addEventListener('click',()=>{ rCashout(); });
+
+  const tabMiniSlots=document.getElementById('tabMiniSlots');
+  const tabMiniRocket=document.getElementById('tabMiniRocket');
+  const gameSlotsWrap=document.getElementById('gameSlots');
+  const gameRocketWrap=document.getElementById('gameRocket');
+  function showMini(which){
+    if(which==='slots'){
+      gameSlotsWrap.classList.remove('hidden');
+      gameRocketWrap.classList.add('hidden');
+      tabMiniSlots.classList.add('outline');
+      tabMiniRocket.classList.remove('outline');
+      stopRocketLoop();rReset();
+    } else {
+      gameSlotsWrap.classList.add('hidden');
+      gameRocketWrap.classList.remove('hidden');
+      tabMiniRocket.classList.add('outline');
+      tabMiniSlots.classList.remove('outline');
+    }
+  }
+  tabMiniSlots?.addEventListener('click',()=>showMini('slots'));
+  tabMiniRocket?.addEventListener('click',()=>showMini('rocket'));
+  showMini('slots');
+
+  (function initPreloader(){
+    if(!preloader||!preloaderFill) return;
+    const minShow=800; const start=performance.now();
+    function setProgress(p){const v=Math.max(0,Math.min(100,p));preloaderFill.style.width=v+'%';preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)))}
+    const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA]));
+    let loaded=0;
+    function loadImg(u,timeout=6000){return new Promise((resolve)=>{const img=new Image();let done=false;const finish=()=>{if(done)return;done=true;loaded++;setProgress(10+(assets.length?(loaded/assets.length)*80:80));resolve();};const to=setTimeout(finish,timeout);img.onload=()=>{clearTimeout(to);finish()};img.onerror=()=>{clearTimeout(to);finish()};img.src=u;});}
+    let fake=0;const tick=setInterval(()=>{fake=Math.min(95,fake+2+Math.random()*3);setProgress(fake)},140);
+    function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden');try{if(typeof window.showIntro==='function') window.showIntro();}catch(_){}}
+    const hardFallback=setTimeout(hide,9000);
+    Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay);});
+    window.addEventListener('load',()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)},{once:true});
+  })();
+</script>
+</body>
+</html>
