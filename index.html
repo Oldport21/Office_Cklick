@@ -336,11 +336,27 @@
 
     </section>
 
-    <!-- НОВЫЙ РАЗДЕЛ: СКИНЫ -->
+    <!-- РАЗДЕЛ: СКИНЫ -->
     <section id="screen-skins" class="screen" aria-hidden="true">
       <div class="screen-title"><h2 class="text-xl font-bold">Скины</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
+
+      <!-- Предпросмотр скина -->
+      <div id="skin-preview" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/60 backdrop-blur">
+        <div class="relative bg-black/80 p-4 rounded-2xl w-[90%] max-w-xs border border-white/10">
+          <button id="skin-preview-close" class="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 grid place-items-center text-lg">✕</button>
+          <img id="skin-preview-img" src="" alt="Предпросмотр" class="w-full h-auto object-contain rounded-xl mb-2">
+          <div id="skin-preview-name" class="font-extrabold mb-1">—</div>
+          <div class="text-xs text-white/70 mb-2">Предпросмотр внешнего вида персонажа в игре.</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="skin-preview-buy" class="px-3 py-2 rounded-lg bg-yellow-500/80 text-black font-extrabold">Купить за 10 💵</button>
+            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabold">Надеть</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-white/70 mb-3">Персонажи стоят по <b>10 💵</b>. По клику на <b>название</b> — предпросмотр перед покупкой. Надетый скин можно снять.</div>
       <div id="skins-list" class="grid gap-3 text-sm"></div>
-      <p class="text-xs text-white/60 mt-2">После покупки питомец автоматически появляется справа от персонажа. Можно включать/выключать.</p>
+      <p class="text-xs text-white/60 mt-3">Питомец «Собака» (10 💵) — появляется справа от персонажа; его можно включать и выключать.</p>
     </section>
 
     <section id="screen-donates" class="screen" aria-hidden="true">
@@ -437,7 +453,7 @@
           </div>
           <span class="text-xs mt-1">Игра</span>
         </button>
-        <!-- ЗАМЕНА «Кошелёк» → «Скины» -->
+        <!-- «Скины» -->
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-skins" aria-selected="false">
           <div class="p-3 bg-emerald-500/20 rounded-lg">
             <span class="text-2xl leading-none">🐾</span>
@@ -456,7 +472,7 @@
 </div>
 
 <script>
-  // --- Прелоадер-сторож: прячет оверлей при событии load или через 7с, даже если ниже упадёт JS ---
+  // --- Прелоадер-сторож ---
   (function(){
     var p=document.getElementById('preloader');
     if(!p) return;
@@ -465,16 +481,30 @@
     setTimeout(hide, 7000);
   })();
 
-  const SAVE_KEY='clicker_save_v3';
+  const SAVE_KEY='clicker_save_v4';
   let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
   let telegramStars=0;
   let priceClick=20,priceMax=30,priceRegen=25;
-  // Скины
-  const DOG_URL='https://i.postimg.cc/76NmJx8X/dog.png';
-  let ownedSkins = {}; // { dog: true }
-  let activePet = '';  // 'dog' | ''
 
-  // ====== АУДИО (консолидация для мобилок) ======
+  // ===== СКИНЫ ПЕРСОНАЖЕЙ =====
+  const SKIN_PRICE = 10;
+  const CHARACTER_SKINS = [
+    { key:'knight', name:'Рыцарь', img:'https://i.postimg.cc/tC2PZ2S3/1755819166-Photoroom.png' },
+    { key:'jojo',   name:'JoJo',   img:'https://i.postimg.cc/RZYHGqzq/1755820156-Photoroom.png' },
+    { key:'naruto', name:'Наруто', img:'https://i.postimg.cc/VLYnk3Rs/1755820818-Photoroom.png' },
+    { key:'clown',  name:'Клоун',  img:'https://i.postimg.cc/RZhtcKyj/Chat-GPT-Image-22-2025-02-10-48-Photoroom.png' },
+    { key:'kek',    name:'КеК',    img:'https://i.postimg.cc/JhBBFm1x/shrek.png' }
+  ];
+
+  // Питомец
+  const DOG_URL='https://i.postimg.cc/76NmJx8X/dog.png';
+
+  // Владелец скинов: { [key]: true }
+  let ownedSkins = {}; // dog, knight, ...
+  let activePet = '';  // 'dog' | ''
+  let activeSkin = ''; // 'knight' | 'jojo' | ...
+
+  // ====== АУДИО ======
   const bgm = document.getElementById('bgm');
   const sfxClick = document.getElementById('sfx-click');
   const settingsBtn = document.getElementById('settings-btn');
@@ -493,7 +523,6 @@
 
   function saveAudio(){ try{ localStorage.setItem(AUDIO_KEY, JSON.stringify(audioPrefs)); }catch(_){} }
 
-  // WebAudio для стабильной громкости/задержки на телефонах
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   let actx=null, master=null, bgmGain=null, sfxGain=null, bgmNode=null, sfxBuf=null;
 
@@ -519,7 +548,7 @@
       try{
         bgmNode = actx.createMediaElementSource(bgm);
         bgmNode.connect(bgmGain);
-        bgm.volume = 1; // управление громкостью дальше через gain
+        bgm.volume = 1;
       }catch(e){}
     }
     if(!sfxBuf){
@@ -561,7 +590,6 @@
     volMusic?.addEventListener(evt, ()=> setMusicVol(_readVol(volMusic)));
     volSfx  ?.addEventListener(evt, ()=> setSfxVol(_readVol(volSfx)));
   });
-  // Кнопка настроек
   settingsBtn?.addEventListener('click',()=> settingsPanel?.classList.toggle('hidden'));
 
   // Тактильная отдача
@@ -571,7 +599,6 @@
     try{ if('vibrate' in navigator){ navigator.vibrate(10); } }catch(_){ }
   }
 
-  // Привязываем вибро к основным действиям
   document.getElementById('spinBtn')?.addEventListener('click', hapticTap);
   document.getElementById('rocketStart')?.addEventListener('click', hapticTap);
   document.getElementById('rocketCashout')?.addEventListener('click', hapticTap);
@@ -579,7 +606,7 @@
 
   function playClickSfx(){
     const now=performance.now();
-    if(playClickSfx._t && now-playClickSfx._t<70) return; // анти-спам
+    if(playClickSfx._t && now-playClickSfx._t<70) return;
     playClickSfx._t=now;
 
     if(sfxBuf && actx){
@@ -622,7 +649,7 @@
   function assetByLevelClamp(arr,lvl){const i=Math.min(arr.length-1,Math.max(1,lvl)-1);return arr[i]}
 
   function saveState(){
-    const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,ts:Date.now()};
+    const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,activeSkin,ts:Date.now()};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}
   }
   let _saveTimer=null,_saveAgain=false;function queueSave(immediate=false){if(immediate){saveState();return}if(_saveTimer){_saveAgain=true;return}_saveTimer=setTimeout(()=>{saveState();_saveTimer=null;if(_saveAgain){_saveAgain=false;queueSave()}},380)}
@@ -640,6 +667,7 @@
         telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;
         ownedSkins= d.ownedSkins && typeof d.ownedSkins==='object' ? d.ownedSkins : {};
         activePet = typeof d.activePet==='string' ? d.activePet : '';
+        activeSkin = typeof d.activeSkin==='string' ? d.activeSkin : '';
         const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec);
       }
     }catch(e){}
@@ -683,7 +711,18 @@
   window.showIntro = openIntro;
 
   function currentLevel(){return Math.floor(xp/200)+1}
-  function refreshCharacterByLevel(){const need=assetByLevelClamp(CHAR_BY_LEVEL,currentLevel());if(character.getAttribute('src')!==need)character.setAttribute('src',need)}
+  function characterSrcBySkin(){
+    if(activeSkin && ownedSkins[activeSkin]){
+      const f = CHARACTER_SKINS.find(s=>s.key===activeSkin);
+      if(f) return f.img;
+    }
+    return '';
+  }
+  function refreshCharacterByLevel(){
+    const skinSrc = characterSrcBySkin();
+    const need = skinSrc || assetByLevelClamp(CHAR_BY_LEVEL,currentLevel());
+    if(character.getAttribute('src')!==need) character.setAttribute('src',need);
+  }
   function refreshBackgroundByLevel(){const need=assetByLevelClamp(BG_BY_LEVEL,currentLevel());if(bg.getAttribute('src')!==need)bg.setAttribute('src',need)}
   function refreshLevelBar(){const prog=xp%200;lvlProgressText.textContent=prog;lvlProgressBar.style.width=(prog/200*100)+'%'}
 
@@ -714,7 +753,7 @@
     renderSkinsUI();
     updatePet();
   }
-  refreshUI();
+
 
   let wrapperRect=wrapper.getBoundingClientRect();
   function updateWrapperRect(){wrapperRect=wrapper.getBoundingClientRect()}
@@ -753,7 +792,7 @@
   btnBuyMax?.addEventListener('click',()=>{if(tryBuy(priceMax)){maxEnergy+=10;energy=Math.min(maxEnergy,energy+10);priceMax=Math.ceil(priceMax*1.6);refreshUI();queueSave(true)}});
   btnBuyRegen?.addEventListener('click',()=>{if(tryBuy(priceRegen)){regenPerSec=Math.round((regenPerSec+0.5)*10)/10;priceRegen=Math.ceil(priceRegen*1.6);refreshUI();queueSave(true)}});
 
-  resetBtn?.addEventListener('click',()=>{stars=0;xp=0;energy=100;maxEnergy=100;perClick=1;regenPerSec=1;priceClick=20;priceMax=30;priceRegen=25;ownedSkins={};activePet='';try{localStorage.removeItem(SAVE_KEY)}catch(e){}refreshUI();queueSave(true)});
+  resetBtn?.addEventListener('click',()=>{stars=0;xp=0;energy=100;maxEnergy=100;perClick=1;regenPerSec=1;priceClick=20;priceMax=30;priceRegen=25;ownedSkins={};activePet='';activeSkin='';try{localStorage.removeItem(SAVE_KEY)}catch(e){}refreshUI();queueSave(true)});
 
   const LINKS_KEY='donate_links_v1';
   function loadLinks(){ try{const raw=localStorage.getItem(LINKS_KEY);return raw?JSON.parse(raw):{}}catch(e){return {} } }
@@ -852,6 +891,7 @@
     tg.onEvent('invoiceClosed', (obj)=>{ console.log('invoiceClosed:', obj); });
   }
 
+  // ===== СЛОТЫ =====
   const SPIN_COST=5,COOLDOWN_MS=900;
   const symbols=[{emoji:'🍒',weight:24,payout3:15},{emoji:'🍋',weight:20,payout3:20},{emoji:'🍉',weight:14,payout3:40},{emoji:'🍇',weight:10,payout3:60},{emoji:'🍀',weight:16,payout3:30},{emoji:'🍑',weight:12,payout3:35},{emoji:'7️⃣',weight:4,payout3:250}];
   const reelsEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
@@ -904,6 +944,7 @@
   }
   spinBtn?.addEventListener('click',spin);
 
+  // ===== РАКЕТА =====
   const rocketSprite=document.getElementById('rocketSprite');
   const rocketMultEl=document.getElementById('rocketMult');
   const rocketStartBtn=document.getElementById('rocketStart');
@@ -1018,52 +1059,141 @@
   tabMiniRocket?.addEventListener('click',()=>showMini('rocket'));
   showMini('slots');
 
-  // Рендер списка скинов (Собака — цена 10 💵)
-  function renderSkinsUI(){
-    const list=document.getElementById('skins-list');
-    if(!list) return;
+  // ===== РАЗДЕЛ СКИНОВ =====
+  function skinCardHTML(item){
+    const owned = !!ownedSkins[item.key];
+    const equipped = owned && activeSkin===item.key;
+    const equipBtn = owned
+      ? `<button id="skin-${item.key}-equip" class="px-3 py-1 rounded-md ${equipped?'bg-emerald-500/80 hover:bg-emerald-500':'bg-blue-500/30 hover:bg-blue-500/50'} font-semibold">${equipped?'Снять':'Надеть'}</button>`
+      : `<button id="skin-${item.key}-buy" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 font-semibold">Купить за ${SKIN_PRICE} 💵</button>`;
+    return `
+      <div class="bg-white/10 p-3 rounded-lg flex gap-3 items-center">
+        <img src="${item.img}" alt="${item.name}" class="w-16 h-16 object-contain rounded-md bg-black/30">
+        <div class="flex-1">
+          <button class="skin-name text-left font-semibold underline decoration-dotted" data-skin="${item.key}">${item.name}</button>
+          <div class="text-xs text-white/70">${owned? (equipped? 'Надето' : 'Куплено') : 'Цена: '+SKIN_PRICE+' 💵'}</div>
+        </div>
+        <div class="grid gap-2 justify-items-end">
+          ${equipBtn}
+        </div>
+      </div>`;
+  }
+
+  function dogCardHTML(){
     const owned=!!ownedSkins['dog'];
     const equipped=owned && activePet==='dog';
-    list.innerHTML = `
+    return `
       <div class="bg-white/10 p-3 rounded-lg flex gap-3 items-center">
         <img src="${DOG_URL}" alt="Собака" class="w-16 h-16 object-contain rounded-md bg-black/30">
         <div class="flex-1">
           <div class="font-semibold">Собака</div>
-          <div class="text-xs text-white/70">${owned? 'Куплено' : 'Питомец будет стоять справа от героя'}</div>
+          <div class="text-xs text-white/70">${owned? 'Питомец доступен' : 'Будет стоять справа от героя'}</div>
         </div>
         <div class="grid gap-2 justify-items-end">
           ${owned ?
-            `<button id="skin-dog-equip" class="px-3 py-1 rounded-md ${equipped?'bg-emerald-500/80 hover:bg-emerald-500':'bg-blue-500/30 hover:bg-blue-500/50'} font-semibold">${equipped?'Убрать':'Экипировать'}</button>`
+            `<button id="skin-dog-equip" class="px-3 py-1 rounded-md ${equipped?'bg-emerald-500/80 hover:bg-emerald-500':'bg-blue-500/30 hover:bg-blue-500/50'} font-semibold">${equipped?'Убрать':'Включить'}</button>`
             :
-            `<button id="skin-dog-buy" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 font-semibold">Купить за 10 💵</button>`}
+            `<button id="skin-dog-buy" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 font-semibold">Купить за ${SKIN_PRICE} 💵</button>`}
         </div>
       </div>`;
-
-    if(!owned){
-      document.getElementById('skin-dog-buy')?.addEventListener('click',()=>{
-        if(tryBuy(10)){
-          ownedSkins['dog']=true; activePet='dog'; refreshUI(); queueSave(true);
-        } else { alert('Нужно 10 💵'); }
-      });
-    } else {
-      document.getElementById('skin-dog-equip')?.addEventListener('click',()=>{
-        activePet = (activePet==='dog') ? '' : 'dog';
-        refreshUI(); queueSave(true);
-      });
-    }
   }
 
+  const skinsListEl=document.getElementById('skins-list');
+  const previewWrap=document.getElementById('skin-preview');
+  const previewImg=document.getElementById('skin-preview-img');
+  const previewName=document.getElementById('skin-preview-name');
+  const previewBuy=document.getElementById('skin-preview-buy');
+  const previewEquip=document.getElementById('skin-preview-equip');
+  const previewClose=document.getElementById('skin-preview-close');
+  let previewKey='';
+
+  function openSkinPreviewByKey(key){
+    const item=CHARACTER_SKINS.find(s=>s.key===key);
+    if(!item) return;
+    previewKey=key;
+    previewImg.src=item.img;
+    previewName.textContent=item.name;
+    const owned=!!ownedSkins[key];
+    const equipped=owned && activeSkin===key;
+    previewBuy.style.display = owned? 'none':'inline-flex';
+    previewEquip.textContent = equipped? 'Снять':'Надеть';
+    previewWrap.classList.remove('hidden');
+    previewWrap.classList.add('flex');
+  }
+  function closeSkinPreview(){
+    previewWrap.classList.add('hidden');
+    previewWrap.classList.remove('flex');
+  }
+  previewClose?.addEventListener('click', closeSkinPreview);
+  previewWrap?.addEventListener('click', (e)=>{ if(e.target===previewWrap) closeSkinPreview(); });
+
+  function renderSkinsUI(){
+    if(!skinsListEl) return;
+    let html = '';
+    html += '<div class="text-xs uppercase tracking-wide text-white/60">Персонажи</div>';
+    for(const item of CHARACTER_SKINS){ html += skinCardHTML(item); }
+    html += '<div class="text-xs uppercase tracking-wide text-white/60 mt-2">Питомцы</div>';
+    html += dogCardHTML();
+    skinsListEl.innerHTML = html;
+
+    // События: покупка/надевание персонажей
+    for(const item of CHARACTER_SKINS){
+      const buyBtn=document.getElementById(`skin-${item.key}-buy`);
+      const eqBtn=document.getElementById(`skin-${item.key}-equip`);
+      const nameBtn=[...document.querySelectorAll('.skin-name')].find(b=>b.getAttribute('data-skin')===item.key);
+      if(buyBtn){ buyBtn.addEventListener('click',()=>{
+        if(tryBuy(SKIN_PRICE)){
+          ownedSkins[item.key]=true;
+          activeSkin=item.key; // сразу надеваем после покупки
+          refreshUI(); queueSave(true);
+        } else { alert('Нужно '+SKIN_PRICE+' 💵'); }
+      }); }
+      if(eqBtn){ eqBtn.addEventListener('click',()=>{
+        if(!ownedSkins[item.key]) return;
+        activeSkin = (activeSkin===item.key) ? '' : item.key;
+        refreshUI(); queueSave(true);
+      }); }
+      if(nameBtn){ nameBtn.addEventListener('click',()=> openSkinPreviewByKey(item.key)); }
+    }
+
+    // Собака
+    const dogBuy=document.getElementById('skin-dog-buy');
+    const dogEq=document.getElementById('skin-dog-equip');
+    if(dogBuy){ dogBuy.addEventListener('click',()=>{
+      if(tryBuy(SKIN_PRICE)){
+        ownedSkins['dog']=true; activePet='dog'; refreshUI(); queueSave(true);
+      } else { alert('Нужно '+SKIN_PRICE+' 💵'); }
+    }); }
+    if(dogEq){ dogEq.addEventListener('click',()=>{ activePet = (activePet==='dog') ? '' : 'dog'; refreshUI(); queueSave(true); }); }
+  }
+
+  // Действия из модалки
+  previewBuy?.addEventListener('click',()=>{
+    const key=previewKey; if(!key) return;
+    if(tryBuy(SKIN_PRICE)){
+      ownedSkins[key]=true; activeSkin=key; refreshUI(); queueSave(true); closeSkinPreview();
+    } else { alert('Нужно '+SKIN_PRICE+' 💵'); }
+  });
+  previewEquip?.addEventListener('click',()=>{
+    const key=previewKey; if(!key) return;
+    if(!ownedSkins[key]){ alert('Скин не куплен'); return; }
+    activeSkin = (activeSkin===key) ? '' : key; refreshUI(); queueSave(true); closeSkinPreview();
+  });
+
+  // Первичная отрисовка UI после инициализации раздела скинов
+  refreshUI();
+// ===== Прелоадер ассетов =====
   (function initPreloader(){
     const preloader=document.getElementById('preloader');
     const preloaderFill=document.getElementById('preloader-fill');
     if(!preloader||!preloaderFill) return;
     const minShow=800; const start=performance.now();
     function setProgress(p){const v=Math.max(0,Math.min(100,p));preloaderFill.style.width=v+'%';preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)))}
-    const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA, DOG_URL]));
+    const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA, DOG_URL, ...CHARACTER_SKINS.map(s=>s.img)]));
     let loaded=0;
     function loadImg(u,timeout=6000){return new Promise((resolve)=>{const img=new Image();let done=false;const finish=()=>{if(done)return;done=true;loaded++;setProgress(10+(assets.length?(loaded/assets.length)*80:80));resolve();};const to=setTimeout(finish,timeout);img.onload=()=>{clearTimeout(to);finish()};img.onerror=()=>{clearTimeout(to);finish()};img.src=u;});}
     let fake=0;const tick=setInterval(()=>{fake=Math.min(95,fake+2+Math.random()*3);setProgress(fake)},140);
-    function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden');try{if(typeof window.showIntro==='function') window.showIntro();}catch(_){}}
+    function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden');try{if(typeof window.showIntro==='function') window.showIntro();}catch(_){} }
     const hardFallback=setTimeout(hide,9000);
     Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay);});
     window.addEventListener('load',()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)},{once:true});
