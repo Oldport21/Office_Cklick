@@ -146,7 +146,6 @@
             </ul>
             <div class="intro-actions">
               <button id="intro-start" class="btn btn-primary">Погнали!</button>
-              <button id="intro-never" class="intro-skip">Скрыть</button>
             </div>
           </div>
         </div>
@@ -701,13 +700,11 @@
   const tgReset=document.getElementById('tg-reset');
   const intro=document.getElementById('intro');
   const introStart=document.getElementById('intro-start');
-  const introNever=document.getElementById('intro-never');
   const petDog=document.getElementById('pet-dog');
 
   function openIntro(){ if(!intro) return; intro.classList.add('show'); intro.setAttribute('aria-hidden','false'); }
   function closeIntro(){ if(!intro) return; intro.classList.remove('show'); intro.setAttribute('aria-hidden','true'); }
   introStart?.addEventListener('click',()=>{ closeIntro(); });
-  introNever?.addEventListener('click',()=>{ closeIntro(); });
   window.showIntro = openIntro;
 
   function currentLevel(){return Math.floor(xp/200)+1}
@@ -785,7 +782,49 @@
   function openScreenById(id){hideAllScreens();const el=document.getElementById(id);if(el){el.classList.add('active');el.setAttribute('aria-hidden','false');gameRoot.classList.add('scene-dim')}}
   function closeScreens(){hideAllScreens();setActiveBtn(null)}
   tabButtons.forEach(btn=>btn.addEventListener('click',()=>{const id=btn.getAttribute('data-screen');const el=document.getElementById(id);const opened=el&&el.classList.contains('active');if(opened){closeScreens()}else{openScreenById(id);setActiveBtn(btn)}}));
-  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
+  document.querySelectorAll('\[data-close\]').forEach(b=>b.addEventListener('click',closeScreens));
+
+  // ===== КЛИК В ПУСТОМ МЕСТЕ: закрыть открытые меню/панели =====
+  document.addEventListener('pointerdown', (e)=>{
+    const t = e.target;
+
+    // 1) Панели-экраны (Доход/Улучшения/Игра/Скины/Донаты)
+    const hasOpenScreen = Object.values(screens).some(el=>el && el.classList.contains('active'));
+    const clickedInsideScreen = !!t.closest('.screen');
+    const clickedTabBtn = !!t.closest('.tab-btn');
+    if(hasOpenScreen && !clickedInsideScreen && !clickedTabBtn){
+      closeScreens();
+    }
+
+    // 2) Панель настроек (шестерёнка)
+    if(settingsPanel && !settingsPanel.classList.contains('hidden')){
+      const clickedInsideSettings = settingsPanel.contains(t);
+      const clickedSettingsBtn = (t===settingsBtn) || (settingsBtn && settingsBtn.contains(t));
+      if(!clickedInsideSettings && !clickedSettingsBtn){
+        settingsPanel.classList.add('hidden');
+      }
+    }
+
+    // 3) Таблица выплат слотов
+    if(paytable && !paytable.classList.contains('hidden')){
+      const clickedInsidePaytable = paytable.contains(t);
+      const clickedPaytableBtn = (t===paytableBtn) || (paytableBtn && paytableBtn.contains(t));
+      if(!clickedInsidePaytable && !clickedPaytableBtn){
+        paytable.classList.add('hidden');
+      }
+    }
+
+    // 4) Настройки донатов
+    if(settingsPanelDonate && !settingsPanelDonate.classList.contains('hidden')){
+      const clickedInsideDonateSettings = settingsPanelDonate.contains(t);
+      const clickedDonateToggle = (t===settingsToggle) || (settingsToggle && settingsToggle.contains(t));
+      if(!clickedInsideDonateSettings && !clickedDonateToggle){
+        settingsPanelDonate.classList.add('hidden');
+      }
+    }
+
+    // 5) Модалка предпросмотра скинов — уже закрывается по клику на подложку (см. обработчик выше)
+  });
 
   function tryBuy(cost){if(stars>=cost){stars-=cost;refreshUI();queueSave();return true}return false}
   btnBuyClick?.addEventListener('click',()=>{if(tryBuy(priceClick)){perClick+=1;priceClick=Math.ceil(priceClick*1.6);refreshUI();queueSave(true)}});
