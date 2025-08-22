@@ -205,22 +205,22 @@
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div><button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div><button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div><button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button></div></div>
-
-        <!-- ✨ НОВОЕ: Бонус за подписку на @vers_diz  (+5000) -->
-        <div class="bg-white/10 p-3 rounded-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <p class="font-semibold">Бонус за подписку на @vers_diz</p>
-              <p id="sub-status" class="text-xs text-white/80">Разовый бонус: +5000 💵</p>
-            </div>
-            <div class="grid gap-1 justify-items-end">
-              <button id="sub-join-btn" class="px-3 py-1 rounded-md bg-violet-500/30 hover:bg-violet-500/50 font-semibold">Открыть канал</button>
-              <button id="sub-check-btn" class="px-3 py-1 rounded-md bg-emerald-500/30 hover:bg-emerald-500/50 font-semibold">Проверить подписку</button>
+        <!-- === Новое улучшение: подписка на @vers_diz с выровненной фразой === -->
+        <div id="sub-reward-card" class="bg-white/10 p-3 rounded-lg">
+          <div class="grid grid-cols-[1fr_auto] items-center gap-3">
+            <p class="font-semibold leading-tight">
+              Подпишись на <span class="font-extrabold">@vers_diz</span> — получи <span class="font-extrabold">+5000 💵</span>
+            </p>
+            <div class="grid gap-2 justify-items-end min-w-[140px]">
+              <button id="sub-open" class="px-3 py-1 rounded-md bg-purple-500/30 hover:bg-purple-500/50 font-semibold">Открыть</button>
+              <button id="sub-check" class="px-3 py-1 rounded-md bg-emerald-500/30 hover:bg-emerald-500/50 font-semibold">Проверить</button>
             </div>
           </div>
-          <p class="text-[11px] text-white/60">Открой игру в Telegram Mini App. Проверка идёт через твой бэкенд ("Адрес бэкенда" в настройках донатов). Боту нужны права видеть участников канала.</p>
+          <div class="text-xs text-white/80 mt-1">Сначала открой группу, подпишись, затем нажми «Проверить».</div>
+          <div id="sub-status" class="text-xs text-white/70">Награда не получена.</div>
         </div>
-        <!-- /конец блока бонуса -->
+        <!-- === /Новое улучшение === -->
+      
       </div>
     </section>
 
@@ -285,7 +285,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <button id="rocketStart" class="px-3 py-2 rounded-lg bg-amber-500/80 hover:bg-amber-500 font-extrabold">СТАРТ</button>
-              <button id="rocketCashout" class="px-3 py-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 font-extrabold" disabled>ВЫВЕСТИ</button>
+              <button id="rocketCashout" class="px-3 py-2 rounded-lg bg-emerald-500/70 hover:bg-emerald-500 font-extrabold" disabled>ВЫВЕСТИ</button>
             </div>
             <p id="rocketHint" class="text-xs text-white/70 text-center">Нажми «СТАРТ», множитель растёт. Успей «ВЫВЕСТИ» до взрыва!</p>
           </div>
@@ -351,7 +351,7 @@
     <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
       <nav class="flex justify-around items-end">
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false"><div class="p-3 bg-yellow-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="text-xs mt-1">Доход</span></button>
-        <button class="tab-btn flex кол items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false"><div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="text-xs mt-1">Улучшения</span></button>
+        <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false"><div class="p-3 bg-blue-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="text-xs mt-1">Улучшения</span></button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-game" aria-selected="false"><div class="p-3 bg-amber-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg></div><span class="text-xs mt-1">Игра</span></button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-skins" aria-selected="false"><div class="p-3 bg-emerald-500/20 rounded-lg"><span class="text-2xl leading-none">🐾</span></div><span class="text-xs mt-1">Скины</span></button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-donates" aria-selected="false"><div class="p-3 bg-purple-500/20 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg></div><span class="text-xs mt-1">Донаты</span></button>
@@ -392,7 +392,8 @@
   if(volSfx)volSfx.value=String(audioPrefs.sfxVol);
   if(bgm){bgm.volume=audioPrefs.musicVol}
   if(sfxClick){sfxClick.volume=audioPrefs.sfxVol}
-  function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}}
+  function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}
+  }
   const AudioCtx=window.AudioContext||window.webkitAudioContext; let actx=null,master=null,bgmGain=null,sfxGain=null,bgmNode=null,sfxBuf=null;
   async function initAudioOnce(){
     if(!AudioCtx)return; if(!actx){actx=new AudioCtx();master=actx.createGain();master.gain.value=1;master.connect(actx.destination)}
@@ -410,7 +411,7 @@
   ['input','change'].forEach(evt=>{volMusic?.addEventListener(evt,()=>setMusicVol(_readVol(volMusic)));volSfx?.addEventListener(evt,()=>setSfxVol(_readVol(volSfx)));});
   settingsBtn?.addEventListener('click',()=>settingsPanel?.classList.toggle('hidden'));
 
-  // ===== Хаптик =====
+  // ====== Хаптик ======
   const tg=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
   function hapticTap(){try{if(tg&&tg.HapticFeedback&&typeof tg.HapticFeedback.impactOccurred==='function'){tg.HapticFeedback.impactOccurred('light')}}catch(_){ }try{if('vibrate'in navigator){navigator.vibrate(10)}}catch(_){}}
   document.getElementById('spinBtn')?.addEventListener('click',hapticTap);
@@ -472,7 +473,7 @@
   function refreshBackgroundByLevel(){const need=assetByLevelClamp(BG_BY_LEVEL,currentLevel());if(bg.getAttribute('src')!==need)bg.setAttribute('src',need)}
   function refreshLevelBar(){const prog=xp%200;lvlProgressText.textContent=prog;lvlProgressBar.style.width=(prog/200*100)+'%'}
   function updatePet(){if(activePet==='dog'&&ownedSkins['dog']){if(petDog){petDog.src=DOG_URL;petDog.classList.add('show')}}else{petDog?.classList.remove('show')}}
-  function refreshUI(){levelEl.textContent=String(currentLevel());refreshCharacterByLevel();refreshBackgroundByLevel();refreshLevelBar();scoreDisplay.textContent=stars;scoreBig.textContent=stars;if(tgStarsBalance)tgStarsBalance.textContent=telegramStars+' ⭐';energyLevelDisplay.textContent=Math.floor(energy);if(maxEnergyDisplay)maxEnergyDisplay.textContent=maxEnergy;energyBar.style.width=(energy/maxEnergy*100)+'%';if(statPerClick)statPerClick.textContent=perClick;if(statRegen)statRegen.textContent=regenPerSec;if(statMaxEnergy)statMaxEnergy.textContent=maxEnergy;if(costClick)costClick.textContent=priceClick;if(costMax)costMax.textContent=priceMax;if(costRegen)costRegen.textContent=priceRegen;renderSkinsUI();updatePet();renderSubBonus()}
+  function refreshUI(){levelEl.textContent=String(currentLevel());refreshCharacterByLevel();refreshBackgroundByLevel();refreshLevelBar();scoreDisplay.textContent=stars;scoreBig.textContent=stars;if(tgStarsBalance)tgStarsBalance.textContent=telegramStars+' ⭐';energyLevelDisplay.textContent=Math.floor(energy);if(maxEnergyDisplay)maxEnergyDisplay.textContent=maxEnergy;energyBar.style.width=(energy/maxEnergy*100)+'%';if(statPerClick)statPerClick.textContent=perClick;if(statRegen)statRegen.textContent=regenPerSec;if(statMaxEnergy)statMaxEnergy.textContent=maxEnergy;if(costClick)costClick.textContent=priceClick;if(costMax)costMax.textContent=priceMax;if(costRegen)costRegen.textContent=priceRegen;renderSkinsUI();updatePet()}
 
   let wrapperRect=wrapper.getBoundingClientRect();function updateWrapperRect(){wrapperRect=wrapper.getBoundingClientRect()}window.addEventListener('resize',updateWrapperRect,{passive:true});window.addEventListener('scroll',updateWrapperRect,{passive:true});
   const COIN_POOL=12;const coinPool=[];let coinPtr=0;for(let i=0;i<COIN_POOL;i++){const el=document.createElement('div');el.className='floating-coin';el.innerHTML='<span class="coin-text">+1<\/span> <span class="font-extrabold">💵<\/span>';wrapper.appendChild(el);coinPool.push(el)}
@@ -516,7 +517,7 @@
 
   // ===== Донаты Stars =====
   const LINKS_KEY='donate_links_v1'; function loadLinks(){try{const raw=localStorage.getItem(LINKS_KEY);return raw?JSON.parse(raw):{}}catch(e){return{}}}
-  function saveLinks(obj){try{localStorage.setItem(LINKS_KEY,JSON.stringify(obj||{}))}catch(e){}}
+  function saveLinks(obj){try{localStorage.setItem(LINKS_KEY,JSON.stringify(obj||{}))}catch(e){}} 
   const BACKEND_URL_KEY='donate_backend_url_v1'; const USE_BACKEND_KEY='donate_use_backend_v1';
   const settingsToggle=document.getElementById('donate-settings-toggle'); const settingsPanelDonate=document.getElementById('donate-settings');
   const input10=document.getElementById('invoice-10'); const input50=document.getElementById('invoice-50'); const input100=document.getElementById('invoice-100'); const inputBackend=document.getElementById('donate-backend'); const inputUseBackend=document.getElementById('donate-use-backend');
@@ -550,7 +551,7 @@
 
   const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88; const LOOPS=8;
   const reels=reelsEls.map(el=>({el,arr:[],current:0}));
-  function shuffle(a){for(let n=a.length-1;n>0;n--){const j=Math.floor(Math.random()*(n+1));[a[n],a[j]]=[a[j],a[n]]}}
+  function shuffle(a){for(let n=a.length-1;n>0;n--){const j=Math.floor(Math.random()*(n+1));[a[n],a[j]]=[a[j]]}}
   function buildReel(data){const base=[];for(let n=0;n<LOOPS;n++){for(const s of symbols){base.push(s.emoji)}} shuffle(base); data.arr=base; data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join(''); data.el.style.transform=`translateY(${-data.current*CELL_H}px)`}
   reels.forEach(buildReel);
   function weightedPickIdx(){const total=symbols.reduce((a,s)=>a+s.weight,0);let r=Math.random()*total;for(let i=0;i<symbols.length;i++){r-=symbols[i].weight;if(r<=0)return i}return symbols.length-1}
@@ -641,77 +642,25 @@
   // ===== Прелоадер ассетов (мягкий) =====
   (function initPreloader(){ const preloader=document.getElementById('preloader'); const preloaderFill=document.getElementById('preloader-fill'); if(!preloader||!preloaderFill)return; const minShow=800; const start=performance.now(); function setProgress(p){const v=Math.max(0,Math.min(100,p));preloaderFill.style.width=v+'%'; preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)))} const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA,DOG_URL,...CHARACTER_SKINS.map(s=>s.img)])); let loaded=0; function loadImg(u,timeout=6000){return new Promise((resolve)=>{const img=new Image();let done=false;const finish=()=>{if(done)return;done=true;loaded++;setProgress(10+(assets.length?(loaded/assets.length)*80:80));resolve()};const to=setTimeout(finish,timeout);img.onload=()=>{clearTimeout(to);finish()};img.onerror=()=>{clearTimeout(to);finish()};img.src=u;})} let fake=0;const tick=setInterval(()=>{fake=Math.min(95,fake+2+Math.random()*3);setProgress(fake)},140); function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden'); try{if(typeof window.showIntro==='function')window.showIntro()}catch(_){} } const hardFallback=setTimeout(hide,9000); Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)}); window.addEventListener('load',()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)},{once:true}); })();
 
-  // ===== БОНУС ЗА ПОДПИСКУ @vers_diz =====
-  const SUB_BONUS_KEY='sub_bonus_vers_diz_claimed_v1';
-  const SUB_REWARD=5000;
-  const SUB_CHAT='@vers_diz';
-  const SUB_URL='https://t.me/vers_diz';
-
-  function renderSubBonus(){
-    const claimed=localStorage.getItem(SUB_BONUS_KEY)==='1';
-    const joinBtn=document.getElementById('sub-join-btn');
-    const checkBtn=document.getElementById('sub-check-btn');
-    const status=document.getElementById('sub-status');
-    if(!joinBtn||!checkBtn||!status) return;
-    if(claimed){
-      joinBtn.setAttribute('disabled','');
-      checkBtn.setAttribute('disabled','');
-      status.textContent='Бонус получен';
-    }else{
-      joinBtn.removeAttribute('disabled');
-      checkBtn.removeAttribute('disabled');
-      status.textContent=`Разовый бонус: +${SUB_REWARD} 💵`;
-    }
-  }
-
-  document.getElementById('sub-join-btn')?.addEventListener('click',()=>{
-    hapticTap();
-    if(tg&&typeof tg.openTelegramLink==='function') tg.openTelegramLink(SUB_URL); else window.open(SUB_URL,'_blank');
-  });
-
-  document.getElementById('sub-check-btn')?.addEventListener('click',async()=>{
-    hapticTap();
-    const claimed=localStorage.getItem(SUB_BONUS_KEY)==='1';
-    if(claimed){ alert('Бонус уже получен'); return; }
-    if(!tg){ alert('Открой игру внутри Telegram, чтобы проверить подписку.'); return; }
-    const backendUrl=(localStorage.getItem('donate_backend_url_v1')||'').trim();
-    if(!backendUrl){ alert('Укажи «Адрес бэкенда» в Настройках донатов — туда обратится проверка.'); return; }
-    const url=backendUrl.replace(/\/$/,'')+'/check_sub';
-    const payload={ initData: tg.initData || '', chat: SUB_CHAT };
-    try{
-      const r=await fetch(url,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-      const data=await r.json().catch(()=>null);
-      const member = !!(data && (
-        data.member===true ||
-        data?.result===true ||
-        data?.result?.member===true ||
-        data?.ok===true && (
-          data?.status==='member' || data?.status==='administrator' || data?.status==='creator' ||
-          data?.result?.status==='member' || data?.result?.status==='administrator' || data?.result?.status==='creator'
-        )
-      ));
-      if(member){
-        gainStars(SUB_REWARD);
-        try{localStorage.setItem(SUB_BONUS_KEY,'1')}catch(_){ }
-        refreshUI(); queueSave(true);
-        if(tg.showAlert) tg.showAlert(`Подписка подтверждена: +${SUB_REWARD} 💵`); else alert(`Подписка подтверждена: +${SUB_REWARD} 💵`);
-      }else{
-        if(tg.showAlert) tg.showAlert('Подписка не найдена. Открой канал, подпишись и вернись.'); else alert('Подписка не найдена.');
-      }
-    }catch(e){
-      alert('Ошибка проверки: '+(e?.message||e));
-    }
-  });
-
-  // БЭКЕНД (подсказка):
-  // POST /check_sub { initData, chat }
-  // 1) Проверить initData по официальной схеме (HMAC-SHA256 с токеном бота).
-  // 2) user_id взять из initData (tg_user.id).
-  // 3) getChatMember(chat, user_id) → status in ['member','administrator','creator'] → вернуть {member:true}.
-  //    Убедись, что бот добавлен в канал/супергруппу и имеет право видеть участников.
-
   // ===== ИНИЦ TG-АВАТАРА =====
   (function initTelegramUser(){ const wa=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null; const box=document.getElementById('tgUser'); const ava=document.getElementById('tgAva'); if(!wa||!box||!ava)return; try{wa.ready()}catch(_){ } const u=(wa.initDataUnsafe&&wa.initDataUnsafe.user)?wa.initDataUnsafe.user:null; if(!u){return} const username=u.username?u.username:''; ava.src=u.photo_url||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='; box.classList.add('show'); box.addEventListener('click',()=>{ if(username&&typeof wa.openTelegramLink==='function'){ wa.openTelegramLink('https://t.me/'+username) } }); })();
+
+  // === Подписка @vers_diz — выравнивание фразы и кнопки ===
+  (function(){
+    const subOpen=document.getElementById('sub-open');
+    if(subOpen){
+      subOpen.addEventListener('click',()=>{
+        const url='https://t.me/vers_diz';
+        try{
+          if(tg && typeof tg.openTelegramLink==='function'){
+            tg.openTelegramLink(url);
+          } else {
+            window.open(url,'_blank');
+          }
+        }catch(_){ window.open(url,'_blank'); }
+      });
+    }
+  })();
 </script>
 </body>
 </html>
