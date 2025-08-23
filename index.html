@@ -19,12 +19,25 @@
   <link rel="preload" as="audio" href="github/music/click.mp3">
 
   <style>
-    :root{--blur-bg:6px;--cell-h:88px}
+    :root{
+      --blur-bg:6px;
+      --cell-h:88px;
+      /* безопасный отступ снизу под закреплённый footer */
+      --bottom-safe: calc(92px + env(safe-area-inset-bottom));
+      /* поднять героя и полосу энергии вверх */
+      --raise: 22px;
+    }
     body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
     .game-wrapper{position:relative;width:100%;max-width:420px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
     .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
     .dim-3{filter:brightness(0.97)}
-    .game-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px 12px 96px;background:rgba(0,0,0,.28)}
+    /* не тянем центр вниз; оставляем безопасный паддинг снизу */
+    .game-content{
+      position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
+      justify-content:flex-start;
+      padding:12px 12px var(--bottom-safe);
+      background:rgba(0,0,0,.28)
+    }
 
     .preloader{position:absolute;inset:0;background:#0b1026;display:flex;align-items:center;justify-content:center;z-index:120;transition:opacity .35s ease}
     .preloader.hidden{opacity:0;pointer-events:none;visibility:hidden;display:none}
@@ -84,9 +97,7 @@
     @keyframes shake{0%,100%{transform:translate(0,0) rotate(14deg)}25%{transform:translate(4px,-3px) rotate(16deg)}50%{transform:translate(-3px,5px) rotate(10deg)}75%{transform:translate(2px,-2px) rotate(15deg)}}
     .rocket-banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);font-weight:800;opacity:0;pointer-events:none}
     .rocket-banner.show{animation:rbIn .6s ease forwards}
-    @keyframes rbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
-
-    }
+    @keyframes rbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 
     .intro{position:absolute;inset:0;z-index:200;background:linear-gradient(180deg,rgba(5,7,18,.9),rgba(11,16,38,.88));display:none}
     .intro.show{display:block}
@@ -112,6 +123,12 @@
 
     /* Пинуем нижний навбар, чтобы он всегда был виден */
     .game-content > footer{position:absolute;left:12px;right:12px;bottom:10px;z-index:10}
+
+    /* лёгкий сдвиг всего центрального блока вверх */
+    .center-area{
+      will-change: transform;
+      transform: translateY(calc(-1 * var(--raise)));
+    }
   </style>
 </head>
 <body>
@@ -391,7 +408,7 @@
           <div class="text-xs text-white/70 mb-2">Предпросмотр внешнего вида персонажа в игре.</div>
           <div class="grid grid-cols-2 gap-2">
             <button id="skin-preview-buy" class="px-3 py-2 rounded-lg bg-yellow-500/80 text-black font-extrabold">Купить за 10 💵</button>
-            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabолд">Надеть</button>
+            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabold">Надеть</button>
           </div>
         </div>
       </div>
@@ -535,7 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sfxClick){sfxClick.volume=audioPrefs.sfxVol}
   function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}}
 
-  // Отладка путей аудио
   bgm?.addEventListener('error',()=>{console.warn('Не удалось загрузить музыку по пути:', bgm.currentSrc || bgm.src)});
   sfxClick?.addEventListener('error',()=>{console.warn('Не удалось загрузить звук клика по пути:', sfxClick.currentSrc || sfxClick.src)});
 
@@ -587,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('sub-open')?.addEventListener('pointerdown',hapticTap,{passive:true});
   document.getElementById('sub-open-2')?.addEventListener('pointerdown',hapticTap,{passive:true});
 
-  // Открытие каналов по кнопке «Подписаться»
+  // Открытие каналов
   function openChannel(url){
     try{
       if(tg && typeof tg.openTelegramLink==='function'){ tg.openTelegramLink(url); }
@@ -1156,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   tabMiniSlots?.addEventListener('click',()=>showMini('slots'));
   tabMiniRocket?.addEventListener('click',()=>showMini('rocket'));
-  showMini('slots');
+  showMini('slots');  // ← было лишнее ")"
 
   // ===== СКИНЫ =====
   function skinCardHTML(item){
@@ -1281,7 +1297,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ...(BG_BY_LEVEL||[]), ...(CHAR_BY_LEVEL||[]),
       INTRO_VERA, DOG_URL,
       ...CHARACTER_SKINS.map(s=>s.img),
-      'https://i.postimg.cc/TP1Cy2ZT/photo-2024-11-20-16-11-48.jpg' // аватар канала Веры для мини-кнопки
+      'https://i.postimg.cc/TP1Cy2ZT/photo-2024-11-20-16-11-48.jpg'
     ]));
     let loaded=0;
     function loadImg(u,timeout=6000){
@@ -1329,6 +1345,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
