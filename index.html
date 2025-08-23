@@ -13,6 +13,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Прелоад аудио строго по пути github/music/... -->
+  <link rel="preload" as="audio" href="github/music/music_game.mp3">
+  <link rel="preload" as="audio" href="github/music/click.mp3">
+
   <style>
     :root{--blur-bg:6px;--cell-h:88px}
     body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
@@ -111,7 +116,7 @@
     <img id="tgAva" alt="avatar" src="" />
   </div>
 
-  <!-- АУДИО -->
+  <!-- АУДИО: строго путь github/music/... -->
   <audio id="bgm" src="github/music/music_game.mp3" preload="auto" loop playsinline></audio>
   <audio id="sfx-click" src="github/music/click.mp3" preload="auto" playsinline></audio>
 
@@ -320,7 +325,7 @@
           <div class="text-xs text-white/70 mb-2">Предпросмотр внешнего вида персонажа в игре.</div>
           <div class="grid grid-cols-2 gap-2">
             <button id="skin-preview-buy" class="px-3 py-2 rounded-lg bg-yellow-500/80 text-black font-extrabold">Купить за 10 💵</button>
-            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabold">Надеть</button>
+            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabолд">Надеть</button>
           </div>
         </div>
       </div>
@@ -411,15 +416,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if(volSfx)volSfx.value=String(audioPrefs.sfxVol);
   if(bgm){bgm.volume=audioPrefs.musicVol}
   if(sfxClick){sfxClick.volume=audioPrefs.sfxVol}
-  function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}
-  }
+  function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}}
+
+  // Отладочная подсветка проблем путей
+  bgm?.addEventListener('error',()=>{console.warn('Не удалось загрузить музыку по пути:', bgm.currentSrc || bgm.src)});
+  sfxClick?.addEventListener('error',()=>{console.warn('Не удалось загрузить звук клика по пути:', sfxClick.currentSrc || sfxClick.src)});
+
   const AudioCtx=window.AudioContext||window.webkitAudioContext; let actx=null,master=null,bgmGain=null,sfxGain=null,bgmNode=null,sfxBuf=null;
   async function initAudioOnce(){
     if(!AudioCtx)return; if(!actx){actx=new AudioCtx();master=actx.createGain();master.gain.value=1;master.connect(actx.destination)}
     if(!bgmGain){bgmGain=actx.createGain();bgmGain.gain.value=audioPrefs.musicVol;bgmGain.connect(master)}
     if(!sfxGain){sfxGain=actx.createGain();sfxGain.gain.value=audioPrefs.sfxVol;sfxGain.connect(master)}
     if(bgm&&!bgmNode){try{bgmNode=actx.createMediaElementSource(bgm);bgmNode.connect(bgmGain);bgm.volume=1}catch(e){}}
-    if(!sfxBuf && sfxClick && sfxClick.src){try{const r=await fetch(sfxClick.src,{cache:'force-cache'});const arr=await r.arrayBuffer();sfxBuf=await actx.decodeAudioData(arr)}catch(e){}}
+    // Декод звука клика по тому же пути, что и в теге audio
+    if(!sfxBuf && sfxClick && sfxClick.src){
+      try{const r=await fetch(sfxClick.src,{cache:'force-cache'});const arr=await r.arrayBuffer();sfxBuf=await actx.decodeAudioData(arr)}catch(e){console.warn('SFX decode error для', sfxClick.src, e)}
+    }
   }
   async function maybeStartBgm(){if(!bgm || !bgm.src)return; if(audioPrefs.musicOn&&bgm.paused){try{await bgm.play()}catch(_){}}}
   async function unlockAudio(){if(!AudioCtx){await maybeStartBgm();return}await initAudioOnce();if(actx&&actx.state==='suspended'){try{await actx.resume()}catch(_){}}await maybeStartBgm()}
@@ -430,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ['input','change'].forEach(evt=>{volMusic?.addEventListener(evt,()=>setMusicVol(_readVol(volMusic)));volSfx?.addEventListener(evt,()=>setSfxVol(_readVol(volSfx)));});
   settingsBtn?.addEventListener('click',()=>settingsPanel?.classList.toggle('hidden'));
 
-  // ====== Хаптик ======
+  // ===== Хаптик =====
   const tg=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
   function hapticTap(){try{if(tg&&tg.HapticFeedback&&typeof tg.HapticFeedback.impactOccurred==='function'){tg.HapticFeedback.impactOccurred('light')}}catch(_){ }try{if('vibrate'in navigator){navigator.vibrate(10)}}catch(_){}}
   document.getElementById('spinBtn')?.addEventListener('click',hapticTap);
@@ -765,7 +777,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
-
-
