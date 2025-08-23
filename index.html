@@ -112,8 +112,8 @@
   </div>
 
   <!-- АУДИО -->
-  <audio id="bgm" src="github/music/music_game.mp3" preload="auto" loop playsinline></audio>
-  <audio id="sfx-click" src="github/music/click.mp3" preload="auto" playsinline></audio>
+  <audio id="bgm" src="" preload="auto" loop playsinline></audio>
+  <audio id="sfx-click" src="" preload="auto" playsinline></audio>
 
   <div id="preloader" class="preloader" aria-live="polite" aria-busy="true">
     <div class="preloader-box">
@@ -205,7 +205,8 @@
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div><button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div><button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div><button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button></div></div>
-        <!-- === Новое улучшение: подписка на @vers_diz с выровненной фразой === -->
+        
+        <!-- === Улучшение: подписка на @vers_diz === -->
         <div id="sub-reward-card" class="bg-white/10 p-3 rounded-lg">
           <div class="grid grid-cols-[1fr_auto] items-center gap-3">
             <p class="font-semibold leading-tight">
@@ -219,7 +220,23 @@
           <div class="text-xs text-white/80 mt-1">Сначала открой группу, подпишись, затем нажми «Проверить».</div>
           <div id="sub-status" class="text-xs text-white/70">Награда не получена.</div>
         </div>
-        <!-- === /Новое улучшение === -->
+        <!-- === /Улучшение === -->
+
+        <!-- === Улучшение: подписка на @Ugly_Studio === -->
+        <div id="sub-reward-card-2" class="bg-white/10 p-3 rounded-lg">
+            <div class="grid grid-cols-[1fr_auto] items-center gap-3">
+                <p class="font-semibold leading-tight">
+                    Подпишись на <span class="font-extrabold">@Ugly_Studio</span> — получи <span class="font-extrabold">+5000 💵</span>
+                </p>
+                <div class="grid gap-2 justify-items-end min-w-[140px]">
+                    <button id="sub-open-2" class="px-3 py-1 rounded-md bg-purple-500/30 hover:bg-purple-500/50 font-semibold">Открыть</button>
+                    <button id="sub-check-2" class="px-3 py-1 rounded-md bg-emerald-500/30 hover:bg-emerald-500/50 font-semibold">Проверить</button>
+                </div>
+            </div>
+            <div class="text-xs text-white/80 mt-1">Сначала открой канал, подпишись, затем нажми «Проверить».</div>
+            <div id="sub-status-2" class="text-xs text-white/70">Награда не получена.</div>
+        </div>
+        <!-- === /Улучшение === -->
       
       </div>
     </section>
@@ -361,11 +378,13 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', () => {
   // --- Прелоадер-сторож дубль (на случай синтакс. ошибок) ---
   (function(){var p=document.getElementById('preloader');if(!p)return;var hid=false;function hide(){if(hid)return;hid=true;try{p.classList.add('hidden')}catch(_){}}window.addEventListener('load',hide,{once:true});setTimeout(hide,7000)})();
 
   const SAVE_KEY='clicker_save_v4';
   let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
+  let sub1Claimed = false, sub2Claimed = false; // Состояние наград за подписку
   let telegramStars=0;
   let priceClick=20,priceMax=30,priceRegen=25;
   const SKIN_PRICE=10;
@@ -400,9 +419,9 @@
     if(!bgmGain){bgmGain=actx.createGain();bgmGain.gain.value=audioPrefs.musicVol;bgmGain.connect(master)}
     if(!sfxGain){sfxGain=actx.createGain();sfxGain.gain.value=audioPrefs.sfxVol;sfxGain.connect(master)}
     if(bgm&&!bgmNode){try{bgmNode=actx.createMediaElementSource(bgm);bgmNode.connect(bgmGain);bgm.volume=1}catch(e){}}
-    if(!sfxBuf){try{const r=await fetch('github/music/click.mp3',{cache:'force-cache'});const arr=await r.arrayBuffer();sfxBuf=await actx.decodeAudioData(arr)}catch(e){}}
+    if(!sfxBuf && sfxClick && sfxClick.src){try{const r=await fetch(sfxClick.src,{cache:'force-cache'});const arr=await r.arrayBuffer();sfxBuf=await actx.decodeAudioData(arr)}catch(e){}}
   }
-  async function maybeStartBgm(){if(!bgm)return; if(audioPrefs.musicOn&&bgm.paused){try{await bgm.play()}catch(_){}}}
+  async function maybeStartBgm(){if(!bgm || !bgm.src)return; if(audioPrefs.musicOn&&bgm.paused){try{await bgm.play()}catch(_){}}}
   async function unlockAudio(){if(!AudioCtx){await maybeStartBgm();return}await initAudioOnce();if(actx&&actx.state==='suspended'){try{await actx.resume()}catch(_){}}await maybeStartBgm()}
   ['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
   function setMusicVol(v){v=Math.min(1,Math.max(0,+v||0));audioPrefs.musicVol=v;if(bgmGain)bgmGain.gain.value=v;if(bgm&&!bgmGain)bgm.volume=v;saveAudio()}
@@ -419,7 +438,7 @@
   document.getElementById('rocketCashout')?.addEventListener('click',hapticTap);
   document.getElementById('character')?.addEventListener('pointerdown',hapticTap,{passive:true});
 
-  function playClickSfx(){const now=performance.now();if(playClickSfx._t&&now-playClickSfx._t<70)return;playClickSfx._t=now;if(sfxBuf&&actx){try{const src=actx.createBufferSource();src.buffer=sfxBuf;const g=actx.createGain();const v=audioPrefs.sfxVol;g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(v,actx.currentTime+0.015);src.connect(g).connect(sfxGain||master);src.start();src.stop(actx.currentTime+0.25);return}catch(e){}}try{sfxClick.currentTime=0;sfxClick.volume=audioPrefs.sfxVol;sfxClick.play()}catch(e){} }
+  function playClickSfx(){const now=performance.now();if(playClickSfx._t&&now-playClickSfx._t<70)return;playClickSfx._t=now;if(sfxBuf&&actx){try{const src=actx.createBufferSource();src.buffer=sfxBuf;const g=actx.createGain();const v=audioPrefs.sfxVol;g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(v,actx.currentTime+0.015);src.connect(g).connect(sfxGain||master);src.start();src.stop(actx.currentTime+0.25);return}catch(e){}}try{if(sfxClick && sfxClick.src){sfxClick.currentTime=0;sfxClick.volume=audioPrefs.sfxVol;sfxClick.play()}}catch(e){} }
 
   const BG_BY_LEVEL=['https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png','https://i.postimg.cc/yxDKJ5Tx/Chat-GPT-Image-18-2025-03-14-02.png','https://i.postimg.cc/CKj0fd2f/Chat-GPT-Image-17-2025-01-38-13.png','https://i.postimg.cc/3JD7YsRb/image.png','https://i.postimg.cc/br4h1T6T/be0fa4b1-51fa-428b-9ad8-341d140dc290.png','https://i.postimg.cc/ZYQ4kbTd/image.png','https://i.postimg.cc/mDXRgRCK/Chat-GPT-Image-18-2025-04-38-22.png'];
   const CHAR_BY_LEVEL=['https://i.postimg.cc/zXWCKfvw/image.png','https://i.postimg.cc/8CkM2BHw/image.png','https://i.postimg.cc/jqDQqcrF/image.png','https://i.postimg.cc/XYk91Dwp/image.png','https://i.postimg.cc/yNfcsgpK/image.png','https://i.postimg.cc/y62hDR1Y/image.png','https://i.postimg.cc/XXMvn404/image.png'];
@@ -427,10 +446,10 @@
   const INTRO_VERA='https://i.postimg.cc/rwFbVPMr/vera-1-Photoroom.png';
   function assetByLevelClamp(arr,lvl){const i=Math.min(arr.length-1,Math.max(1,lvl)-1);return arr[i]}
 
-  function saveState(){const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,activeSkin,ts:Date.now()};try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}}
+  function saveState(){const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,activeSkin,sub1Claimed,sub2Claimed,ts:Date.now()};try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}}
   let _saveTimer=null,_saveAgain=false;function queueSave(immediate=false){if(immediate){saveState();return}if(_saveTimer){_saveAgain=true;return}_saveTimer=setTimeout(()=>{saveState();_saveTimer=null;if(_saveAgain){_saveAgain=false;queueSave()}},380)}
   window.addEventListener('pagehide',()=>queueSave(true));
-  function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;ownedSkins=d.ownedSkins&&typeof d.ownedSkins==='object'?d.ownedSkins:{};activePet=typeof d.activePet==='string'?d.activePet:'';activeSkin=typeof d.activeSkin==='string'?d.activeSkin:'';const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec)}}catch(e){} }
+  function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;ownedSkins=d.ownedSkins&&typeof d.ownedSkins==='object'?d.ownedSkins:{};activePet=typeof d.activePet==='string'?d.activePet:'';activeSkin=typeof d.activeSkin==='string'?d.activeSkin:'';sub1Claimed=d.sub1Claimed||false;sub2Claimed=d.sub2Claimed||false;const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec)}}catch(e){} }
   loadState();
 
   const wrapper=document.getElementById('wrapper');
@@ -513,7 +532,7 @@
   btnBuyClick?.addEventListener('click',()=>{if(tryBuy(priceClick)){perClick+=1;priceClick=Math.ceil(priceClick*1.6);refreshUI();queueSave(true)}});
   btnBuyMax?.addEventListener('click',()=>{if(tryBuy(priceMax)){maxEnergy+=10;energy=Math.min(maxEnergy,energy+10);priceMax=Math.ceil(priceMax*1.6);refreshUI();queueSave(true)}});
   btnBuyRegen?.addEventListener('click',()=>{if(tryBuy(priceRegen)){regenPerSec=Math.round((regenPerSec+0.5)*10)/10;priceRegen=Math.ceil(priceRegen*1.6);refreshUI();queueSave(true)}});
-  resetBtn?.addEventListener('click',()=>{stars=0;xp=0;energy=100;maxEnergy=100;perClick=1;regenPerSec=1;priceClick=20;priceMax=30;priceRegen=25;ownedSkins={};activePet='';activeSkin='';try{localStorage.removeItem(SAVE_KEY)}catch(e){}refreshUI();queueSave(true)});
+  resetBtn?.addEventListener('click',()=>{stars=0;xp=0;energy=100;maxEnergy=100;perClick=1;regenPerSec=1;priceClick=20;priceMax=30;priceRegen=25;ownedSkins={};activePet='';activeSkin='';sub1Claimed=false;sub2Claimed=false;try{localStorage.removeItem(SAVE_KEY)}catch(e){}refreshUI();queueSave(true)});
 
   // ===== Донаты Stars =====
   const LINKS_KEY='donate_links_v1'; function loadLinks(){try{const raw=localStorage.getItem(LINKS_KEY);return raw?JSON.parse(raw):{}}catch(e){return{}}}
@@ -551,8 +570,25 @@
 
   const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88; const LOOPS=8;
   const reels=reelsEls.map(el=>({el,arr:[],current:0}));
-  function shuffle(a){for(let n=a.length-1;n>0;n--){const j=Math.floor(Math.random()*(n+1));[a[n],a[j]]=[a[j]]}}
-  function buildReel(data){const base=[];for(let n=0;n<LOOPS;n++){for(const s of symbols){base.push(s.emoji)}} shuffle(base); data.arr=base; data.el.innerHTML=base.map(e=>`<div class='cell'>${e}</div>`).join(''); data.el.style.transform=`translateY(${-data.current*CELL_H}px)`}
+  function shuffle(a){for(let n=a.length-1;n>0;n--){const j=Math.floor(Math.random()*(n+1));[a[n],a[j]]=[a[j],a[n]]}}
+  
+  // Обновленная функция для построения барабанов слота
+  function buildReel(data){
+    const baseSymbols = symbols.map(s => s.emoji);
+    const reelContent = [];
+    // Создаем длинный, разнообразный барабан
+    for (let i = 0; i < LOOPS * 2; i++) {
+        shuffle(baseSymbols); // Перемешиваем базовый набор символов
+        reelContent.push(...baseSymbols);
+    }
+    data.arr = reelContent;
+    data.el.innerHTML = reelContent.map(e => `<div class='cell'>${e}</div>`).join('');
+    // Сбрасываем позицию в начало
+    data.current = 0;
+    data.el.style.transition = 'none';
+    data.el.style.transform = 'translateY(0px)';
+  }
+
   reels.forEach(buildReel);
   function weightedPickIdx(){const total=symbols.reduce((a,s)=>a+s.weight,0);let r=Math.random()*total;for(let i=0;i<symbols.length;i++){r-=symbols[i].weight;if(r<=0)return i}return symbols.length-1}
   function capReel(data){if(data.arr.length>300){data.current=0;buildReel(data)}}
@@ -645,22 +681,91 @@
   // ===== ИНИЦ TG-АВАТАРА =====
   (function initTelegramUser(){ const wa=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null; const box=document.getElementById('tgUser'); const ava=document.getElementById('tgAva'); if(!wa||!box||!ava)return; try{wa.ready()}catch(_){ } const u=(wa.initDataUnsafe&&wa.initDataUnsafe.user)?wa.initDataUnsafe.user:null; if(!u){return} const username=u.username?u.username:''; ava.src=u.photo_url||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='; box.classList.add('show'); box.addEventListener('click',()=>{ if(username&&typeof wa.openTelegramLink==='function'){ wa.openTelegramLink('https://t.me/'+username) } }); })();
 
-  // === Подписка @vers_diz — выравнивание фразы и кнопки ===
-  (function(){
-    const subOpen=document.getElementById('sub-open');
-    if(subOpen){
-      subOpen.addEventListener('click',()=>{
-        const url='https://t.me/vers_diz';
-        try{
-          if(tg && typeof tg.openTelegramLink==='function'){
-            tg.openTelegramLink(url);
-          } else {
-            window.open(url,'_blank');
-          }
-        }catch(_){ window.open(url,'_blank'); }
-      });
+  // ===== НАГРАДЫ ЗА ПОДПИСКУ =====
+  (function initSubscriptionRewards() {
+    const channels = {
+        '1': {
+            url: 'https://t.me/vers_diz',
+            reward: 5000,
+            isClaimed: () => sub1Claimed,
+            claim: () => { sub1Claimed = true; },
+            elements: { 
+                open: document.getElementById('sub-open'), 
+                check: document.getElementById('sub-check'), 
+                status: document.getElementById('sub-status'), 
+                card: document.getElementById('sub-reward-card') 
+            }
+        },
+        '2': {
+            url: 'https://t.me/Ugly_Studio',
+            reward: 5000,
+            isClaimed: () => sub2Claimed,
+            claim: () => { sub2Claimed = true; },
+            elements: { 
+                open: document.getElementById('sub-open-2'), 
+                check: document.getElementById('sub-check-2'), 
+                status: document.getElementById('sub-status-2'), 
+                card: document.getElementById('sub-reward-card-2') 
+            }
+        }
+    };
+
+    function updateSubUI(channel) {
+        if (!channel.elements.status) return;
+        if (channel.isClaimed()) {
+            channel.elements.status.textContent = 'Награда получена!';
+            channel.elements.status.style.color = '#86efac'; // green
+            if (channel.elements.check) {
+              channel.elements.check.disabled = true;
+              channel.elements.check.style.opacity = '0.6';
+            }
+        } else {
+            channel.elements.status.textContent = 'Награда не получена.';
+            channel.elements.status.style.color = '';
+            if (channel.elements.check) {
+              channel.elements.check.disabled = false;
+              channel.elements.check.style.opacity = '1';
+            }
+        }
+    }
+
+    for (const key in channels) {
+        const channel = channels[key];
+        if (!channel.elements.card) continue;
+
+        updateSubUI(channel);
+
+        channel.elements.open?.addEventListener('click', () => {
+            try {
+                if (tg && typeof tg.openTelegramLink === 'function') {
+                    tg.openTelegramLink(channel.url);
+                } else {
+                    window.open(channel.url, '_blank');
+                }
+            } catch (_) {
+                window.open(channel.url, '_blank');
+            }
+        });
+
+        channel.elements.check?.addEventListener('click', () => {
+            if (channel.isClaimed()) {
+                if (tg && tg.showAlert) tg.showAlert('Награда уже получена.');
+                return;
+            }
+            gainStars(channel.reward);
+            channel.claim();
+            updateSubUI(channel);
+            refreshUI();
+            queueSave(true);
+            if (tg && tg.showAlert) tg.showAlert(`+${channel.reward} 💵 за подписку!`);
+        });
     }
   })();
+});
 </script>
 </body>
 </html>
+
+
+
+
