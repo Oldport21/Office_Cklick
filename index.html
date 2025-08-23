@@ -182,7 +182,7 @@
       <div class="w-full bg-white/10 rounded-full h-2"><div id="lvl-progress-bar" class="h-2 bg-sky-400 rounded-full" style="width:0%"></div></div>
     </div>
 
-    <main class="center-area flex-grow flex flex-col items-center justify-center">
+    <main class="center-area flex flex-col items-center justify-center flex-grow">
       <div class="big-score flex items-center gap-2 mb-2"><span class="w-10 h-10 grid place-items-center text-3xl font-extrabold leading-none">💵</span><span id="score-big" class="text-5xl font-bold">0</span></div>
       <div class="relative w-80 h-80 md:w-96 md:h-96 mb-6">
         <div class="podium"></div>
@@ -210,7 +210,7 @@
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div><button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div><button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button></div></div>
         <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div><button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button></div></div>
-        
+
         <!-- === Улучшение: подписка на @vers_diz === -->
         <div id="sub-reward-card" class="bg-white/10 p-3 rounded-lg">
           <div class="grid grid-cols-[1fr_auto] items-center gap-3">
@@ -229,20 +229,20 @@
 
         <!-- === Улучшение: подписка на @Ugly_Studio === -->
         <div id="sub-reward-card-2" class="bg-white/10 p-3 rounded-lg">
-            <div class="grid grid-cols-[1fr_auto] items-center gap-3">
-                <p class="font-semibold leading-tight">
-                    Подпишись на <span class="font-extrabold">@Ugly_Studio</span> — получи <span class="font-extrabold">+5000 💵</span>
-                </p>
-                <div class="grid gap-2 justify-items-end min-w-[140px]">
-                    <button id="sub-open-2" class="px-3 py-1 rounded-md bg-purple-500/30 hover:bg-purple-500/50 font-semibold">Открыть</button>
-                    <button id="sub-check-2" class="px-3 py-1 rounded-md bg-emerald-500/30 hover:bg-emerald-500/50 font-semibold">Проверить</button>
-                </div>
+          <div class="grid grid-cols-[1fr_auto] items-center gap-3">
+            <p class="font-semibold leading-tight">
+              Подпишись на <span class="font-extrabold">@Ugly_Studio</span> — получи <span class="font-extrabold">+5000 💵</span>
+            </p>
+            <div class="grid gap-2 justify-items-end min-w-[140px]">
+              <button id="sub-open-2" class="px-3 py-1 rounded-md bg-purple-500/30 hover:bg-purple-500/50 font-semibold">Открыть</button>
+              <button id="sub-check-2" class="px-3 py-1 rounded-md bg-emerald-500/30 hover:bg-emerald-500/50 font-semibold">Проверить</button>
             </div>
-            <div class="text-xs text-white/80 mt-1">Сначала открой канал, подпишись, затем нажми «Проверить».</div>
-            <div id="sub-status-2" class="text-xs text-white/70">Награда не получена.</div>
+          </div>
+          <div class="text-xs text-white/80 mt-1">Сначала открой канал, подпишись, затем нажми «Проверить».</div>
+          <div id="sub-status-2" class="text-xs text-white/70">Награда не получена.</div>
         </div>
         <!-- === /Улучшение === -->
-      
+
       </div>
     </section>
 
@@ -325,7 +325,7 @@
           <div class="text-xs text-white/70 mb-2">Предпросмотр внешнего вида персонажа в игре.</div>
           <div class="grid grid-cols-2 gap-2">
             <button id="skin-preview-buy" class="px-3 py-2 rounded-lg bg-yellow-500/80 text-black font-extrabold">Купить за 10 💵</button>
-            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabолд">Надеть</button>
+            <button id="skin-preview-equip" class="px-3 py-2 rounded-lg bg-emerald-500/80 text-black font-extrabold">Надеть</button>
           </div>
         </div>
       </div>
@@ -384,12 +384,13 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Прелоадер-сторож дубль (на случай синтакс. ошибок) ---
+  // --- Прелоадер-сторож дубль ---
   (function(){var p=document.getElementById('preloader');if(!p)return;var hid=false;function hide(){if(hid)return;hid=true;try{p.classList.add('hidden')}catch(_){}}window.addEventListener('load',hide,{once:true});setTimeout(hide,7000)})();
 
   const SAVE_KEY='clicker_save_v4';
   let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
-  let sub1Claimed = false, sub2Claimed = false; // Состояние наград за подписку
+  // ЛЕГАСИ-флаги бывших наград за подписку (нужны для миграции)
+  let sub1Claimed=false, sub2Claimed=false;
   let telegramStars=0;
   let priceClick=20,priceMax=30,priceRegen=25;
   const SKIN_PRICE=10;
@@ -398,7 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
     {key:'jojo',name:'JoJo',img:'https://i.postimg.cc/RZYHGqzq/1755820156-Photoroom.png'},
     {key:'naruto',name:'Наруто',img:'https://i.postimg.cc/VLYnk3Rs/1755820818-Photoroom.png'},
     {key:'clown',name:'Клоун',img:'https://i.postimg.cc/RZhtcKyj/Chat-GPT-Image-22-2025-02-10-48-Photoroom.png'},
-    {key:'kek',name:'КеК',img:'https://i.postimg.cc/JhBBFm1x/shrek.png'}];
+    {key:'kek',name:'КеК',img:'https://i.postimg.cc/JhBBFm1x/shrek.png'}
+  ];
   const DOG_URL='https://i.postimg.cc/76NmJx8X/dog.png';
   let ownedSkins={}; let activePet=''; let activeSkin='';
 
@@ -418,7 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if(sfxClick){sfxClick.volume=audioPrefs.sfxVol}
   function saveAudio(){try{localStorage.setItem(AUDIO_KEY,JSON.stringify(audioPrefs))}catch(_){}}
 
-  // Отладочная подсветка проблем путей
   bgm?.addEventListener('error',()=>{console.warn('Не удалось загрузить музыку по пути:', bgm.currentSrc || bgm.src)});
   sfxClick?.addEventListener('error',()=>{console.warn('Не удалось загрузить звук клика по пути:', sfxClick.currentSrc || sfxClick.src)});
 
@@ -428,14 +429,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!bgmGain){bgmGain=actx.createGain();bgmGain.gain.value=audioPrefs.musicVol;bgmGain.connect(master)}
     if(!sfxGain){sfxGain=actx.createGain();sfxGain.gain.value=audioPrefs.sfxVol;sfxGain.connect(master)}
     if(bgm&&!bgmNode){try{bgmNode=actx.createMediaElementSource(bgm);bgmNode.connect(bgmGain);bgm.volume=1}catch(e){}}
-    // Декод звука клика по тому же пути, что и в теге audio
     if(!sfxBuf && sfxClick && sfxClick.src){
       try{const r=await fetch(sfxClick.src,{cache:'force-cache'});const arr=await r.arrayBuffer();sfxBuf=await actx.decodeAudioData(arr)}catch(e){console.warn('SFX decode error для', sfxClick.src, e)}
     }
   }
   async function maybeStartBgm(){if(!bgm || !bgm.src)return; if(audioPrefs.musicOn&&bgm.paused){try{await bgm.play()}catch(_){}}}
   async function unlockAudio(){if(!AudioCtx){await maybeStartBgm();return}await initAudioOnce();if(actx&&actx.state==='suspended'){try{await actx.resume()}catch(_){}}await maybeStartBgm()}
-  ['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
+  ;['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
   function setMusicVol(v){v=Math.min(1,Math.max(0,+v||0));audioPrefs.musicVol=v;if(bgmGain)bgmGain.gain.value=v;if(bgm&&!bgmGain)bgm.volume=v;saveAudio()}
   function setSfxVol(v){v=Math.min(1,Math.max(0,+v||0));audioPrefs.sfxVol=v;if(sfxGain)sfxGain.gain.value=v;if(sfxClick&&!sfxGain)sfxClick.volume=v;saveAudio()}
   const _readVol=el=>Math.min(1,Math.max(0,parseFloat(el?.value||'0')));
@@ -463,6 +463,25 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('pagehide',()=>queueSave(true));
   function loadState(){try{const raw=localStorage.getItem(SAVE_KEY);if(raw){const d=JSON.parse(raw);if(typeof d.stars==='number')stars=d.stars;xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);energy=d.energy??energy;maxEnergy=d.maxEnergy??maxEnergy;perClick=d.perClick??perClick;regenPerSec=d.regenPerSec??regenPerSec;priceClick=d.priceClick??priceClick;priceMax=d.priceMax??priceMax;priceRegen=d.priceRegen??priceRegen;telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;ownedSkins=d.ownedSkins&&typeof d.ownedSkins==='object'?d.ownedSkins:{};activePet=typeof d.activePet==='string'?d.activePet:'';activeSkin=typeof d.activeSkin==='string'?d.activeSkin:'';sub1Claimed=d.sub1Claimed||false;sub2Claimed=d.sub2Claimed||false;const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;energy=Math.min(maxEnergy,energy+secs*regenPerSec)}}catch(e){} }
   loadState();
+
+  // ==== Миграция: разовая отмена старых наград у тех, кто их уже получал ====
+  (function revokeOldSubRewardsOnce(){
+    const REV_KEY='sub_rewards_revoked_v1';
+    try{
+      if(localStorage.getItem(REV_KEY)==='1') return; // уже выполнено
+      let toSubtract = 0;
+      if(sub1Claimed) toSubtract += 5000; // бывшая награда @vers_diz
+      if(sub2Claimed) toSubtract += 5000; // бывшая награда @Ugly_Studio
+      if(toSubtract>0){
+        stars = Math.max(0, stars - toSubtract);
+        xp    = Math.max(0, xp    - toSubtract);
+        sub1Claimed = false;
+        sub2Claimed = false;
+      }
+      localStorage.setItem(REV_KEY,'1');
+      queueSave(true);
+    }catch(e){ /* silently */ }
+  })();
 
   const wrapper=document.getElementById('wrapper');
   const gameRoot=document.getElementById('game');
@@ -529,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
   tabButtons.forEach(btn=>btn.addEventListener('click',()=>{const id=btn.getAttribute('data-screen');const el=document.getElementById(id);const opened=el&&el.classList.contains('active');if(opened){closeScreens()}else{openScreenById(id);setActiveBtn(btn)}}));
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
 
-  // Закрытие по клику снаружи панелей
+  // Скрытие панелей по клику вовне
   document.addEventListener('pointerdown',(e)=>{
     const t=e.target; const hasOpen=Object.values(screens).some(el=>el&&el.classList.contains('active'));
     if(hasOpen && !t.closest('.screen') && !t.closest('.tab-btn')){ closeScreens(); }
@@ -583,19 +602,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const CELL_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-h'))||88; const LOOPS=8;
   const reels=reelsEls.map(el=>({el,arr:[],current:0}));
   function shuffle(a){for(let n=a.length-1;n>0;n--){const j=Math.floor(Math.random()*(n+1));[a[n],a[j]]=[a[j],a[n]]}}
-  
-  // Обновленная функция для построения барабанов слота
+
   function buildReel(data){
     const baseSymbols = symbols.map(s => s.emoji);
     const reelContent = [];
-    // Создаем длинный, разнообразный барабан
     for (let i = 0; i < LOOPS * 2; i++) {
-        shuffle(baseSymbols); // Перемешиваем базовый набор символов
-        reelContent.push(...baseSymbols);
+      shuffle(baseSymbols);
+      reelContent.push(...baseSymbols);
     }
     data.arr = reelContent;
     data.el.innerHTML = reelContent.map(e => `<div class='cell'>${e}</div>`).join('');
-    // Сбрасываем позицию в начало
     data.current = 0;
     data.el.style.transition = 'none';
     data.el.style.transform = 'translateY(0px)';
@@ -688,14 +704,14 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshUI();
 
   // ===== Прелоадер ассетов (мягкий) =====
-  (function initPreloader(){ const preloader=document.getElementById('preloader'); const preloaderFill=document.getElementById('preloader-fill'); if(!preloader||!preloaderFill)return; const minShow=800; const start=performance.now(); function setProgress(p){const v=Math.max(0,Math.min(100,p));preloaderFill.style.width=v+'%'; preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)))} const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA,DOG_URL,...CHARACTER_SKINS.map(s=>s.img)])); let loaded=0; function loadImg(u,timeout=6000){return new Promise((resolve)=>{const img=new Image();let done=false;const finish=()=>{if(done)return;done=true;loaded++;setProgress(10+(assets.length?(loaded/assets.length)*80:80));resolve()};const to=setTimeout(finish,timeout);img.onload=()=>{clearTimeout(to);finish()};img.onerror=()=>{clearTimeout(to);finish()};img.src=u;})} let fake=0;const tick=setInterval(()=>{fake=Math.min(95,fake+2+Math.random()*3);setProgress(fake)},140); function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden'); try{if(typeof window.showIntro==='function')window.showIntro()}catch(_){} } const hardFallback=setTimeout(hide,9000); Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)}); window.addEventListener('load',()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)},{once:true}); })();
+  (function initPreloader(){ const preloader=document.getElementById('preloader'); const preloaderFill=document.getElementById('preloader-fill'); if(!preloader||!preloaderFill)return; const minShow=800; const start=performance.now(); function setProgress(p){const v=Math.max(0,Math.min(100,p));preloaderFill.style.width=v+'%'; preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)))} const assets=Array.from(new Set([...(BG_BY_LEVEL||[]),...(CHAR_BY_LEVEL||[]),INTRO_VERA,DOG_URL,...CHARACTER_SKINS.map(s=>s.img)])); let loaded=0; function loadImg(u,timeout=6000){return new Promise((resolve)=>{const img=new Image();let done=false;const finish=()=>{if(done)return;done=true;loaded++;setProgress(10+(assets.length?(loaded/assets.length)*80:80));resolve()};const to=setTimeout(finish,timeout);img.onload=()=>{clearTimeout(to);finish()};img.onerror=()=>{clearTimeout(to);finish()};img.src=u;})} let fake=0;const tick=setInterval(()=>{fake=Math.min(95,fake+2+Math.random()*3);setProgress(fake)},140); function hide(){clearInterval(tick);setProgress(100);preloader.classList.add('hidden'); try{if(typeof window.showIntro==='function')window.showIntro()}catch(_){ } } const hardFallback=setTimeout(hide,9000); Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)}); window.addEventListener('load',()=>{const elapsed=performance.now()-start;const delay=Math.max(0,minShow-elapsed);setTimeout(()=>{clearTimeout(hardFallback);hide()},delay)},{once:true}); })();
 
   // ===== ИНИЦ TG-АВАТАРА =====
   (function initTelegramUser(){ const wa=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null; const box=document.getElementById('tgUser'); const ava=document.getElementById('tgAva'); if(!wa||!box||!ava)return; try{wa.ready()}catch(_){ } const u=(wa.initDataUnsafe&&wa.initDataUnsafe.user)?wa.initDataUnsafe.user:null; if(!u){return} const username=u.username?u.username:''; ava.src=u.photo_url||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='; box.classList.add('show'); box.addEventListener('click',()=>{ if(username&&typeof wa.openTelegramLink==='function'){ wa.openTelegramLink('https://t.me/'+username) } }); })();
 
-  // ===== НАГРАДЫ ЗА ПОДПИСКУ (с реальной проверкой через бэкенд) =====
+  // ===== НАГРАДЫ ЗА ПОДПИСКУ (UI и проверка через бэкенд) =====
   (function initSubscriptionRewards() {
-    // База API: берём из настроек донатов, если задан (тот же сервер), иначе используем тот же хост: '/api'
+    // База API: берём из настроек донатов, если задан (тот же сервер), иначе используем '/api'
     const SUB_API_BASE = ((localStorage.getItem('donate_backend_url_v1')||'').trim()) || '/api';
 
     async function checkMembershipOnServer(chat){
