@@ -693,84 +693,94 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== ИНИЦ TG-АВАТАРА =====
   (function initTelegramUser(){ const wa=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null; const box=document.getElementById('tgUser'); const ava=document.getElementById('tgAva'); if(!wa||!box||!ava)return; try{wa.ready()}catch(_){ } const u=(wa.initDataUnsafe&&wa.initDataUnsafe.user)?wa.initDataUnsafe.user:null; if(!u){return} const username=u.username?u.username:''; ava.src=u.photo_url||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='; box.classList.add('show'); box.addEventListener('click',()=>{ if(username&&typeof wa.openTelegramLink==='function'){ wa.openTelegramLink('https://t.me/'+username) } }); })();
 
-  // ===== НАГРАДЫ ЗА ПОДПИСКУ =====
+  // ===== НАГРАДЫ ЗА ПОДПИСКУ (с реальной проверкой через бэкенд) =====
   (function initSubscriptionRewards() {
-    const channels = {
-        '1': {
-            url: 'https://t.me/vers_diz',
-            reward: 5000,
-            isClaimed: () => sub1Claimed,
-            claim: () => { sub1Claimed = true; },
-            elements: { 
-                open: document.getElementById('sub-open'), 
-                check: document.getElementById('sub-check'), 
-                status: document.getElementById('sub-status'), 
-                card: document.getElementById('sub-reward-card') 
-            }
-        },
-        '2': {
-            url: 'https://t.me/Ugly_Studio',
-            reward: 5000,
-            isClaimed: () => sub2Claimed,
-            claim: () => { sub2Claimed = true; },
-            elements: { 
-                open: document.getElementById('sub-open-2'), 
-                check: document.getElementById('sub-check-2'), 
-                status: document.getElementById('sub-status-2'), 
-                card: document.getElementById('sub-reward-card-2') 
-            }
-        }
-    };
+    // База API: берём из настроек донатов, если задан (тот же сервер), иначе используем тот же хост: '/api'
+    const SUB_API_BASE = ((localStorage.getItem('donate_backend_url_v1')||'').trim()) || '/api';
 
-    function updateSubUI(channel) {
-        if (!channel.elements.status) return;
-        if (channel.isClaimed()) {
-            channel.elements.status.textContent = 'Награда получена!';
-            channel.elements.status.style.color = '#86efac'; // green
-            if (channel.elements.check) {
-              channel.elements.check.disabled = true;
-              channel.elements.check.style.opacity = '0.6';
-            }
-        } else {
-            channel.elements.status.textContent = 'Награда не получена.';
-            channel.elements.status.style.color = '';
-            if (channel.elements.check) {
-              channel.elements.check.disabled = false;
-              channel.elements.check.style.opacity = '1';
-            }
-        }
+    async function checkMembershipOnServer(chat){
+      const base = SUB_API_BASE.replace(/\/$/, '');
+      const initData = tg?.initData || '';
+      try{
+        const res = await fetch(`${base}/check-sub`,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ chat, initData })
+        });
+        const data = await res.json().catch(()=>null);
+        if(data && data.ok){ return { ok:true, member: !!data.member }; }
+        return { ok:false, member:false, error: data?.error || 'bad_response' };
+      }catch(e){ return { ok:false, member:false, error:'network_error' }; }
     }
 
-    for (const key in channels) {
-        const channel = channels[key];
-        if (!channel.elements.card) continue;
+    const channels = {
+      '1': {
+        url: 'https://t.me/vers_diz',
+        chat: '@vers_diz',
+        reward: 5000,
+        isClaimed: () => sub1Claimed,
+        claim: () => { sub1Claimed = true; },
+        elements: {
+          open: document.getElementById('sub-open'),
+          check: document.getElementById('sub-check'),
+          status: document.getElementById('sub-status'),
+          card: document.getElementById('sub-reward-card')
+        }
+      },
+      '2': {
+        url: 'https://t.me/Ugly_Studio',
+        chat: '@Ugly_Studio',
+        reward: 5000,
+        isClaimed: () => sub2Claimed,
+        claim: () => { sub2Claimed = true; },
+        elements: {
+          open: document.getElementById('sub-open-2'),
+          check: document.getElementById('sub-check-2'),
+          status: document.getElementById('sub-status-2'),
+          card: document.getElementById('sub-reward-card-2')
+        }
+      }
+    };
 
-        updateSubUI(channel);
+    function updateSubUI(channel){
+      const st = channel.elements.status; if(!st) return;
+      if(channel.isClaimed()){
+        st.textContent = 'Награда получена!';
+        st.style.color = '#86efac';
+        channel.elements.check && (channel.elements.check.disabled = true, channel.elements.check.style.opacity='0.6');
+      } else {
+        st.textContent = 'Награда не получена.';
+        st.style.color = '';
+        channel.elements.check && (channel.elements.check.disabled = false, channel.elements.check.style.opacity='1');
+      }
+    }
 
-        channel.elements.open?.addEventListener('click', () => {
-            try {
-                if (tg && typeof tg.openTelegramLink === 'function') {
-                    tg.openTelegramLink(channel.url);
-                } else {
-                    window.open(channel.url, '_blank');
-                }
-            } catch (_) {
-                window.open(channel.url, '_blank');
-            }
-        });
+    for(const key in channels){
+      const channel = channels[key];
+      if(!channel.elements.card) continue;
+      updateSubUI(channel);
 
-        channel.elements.check?.addEventListener('click', () => {
-            if (channel.isClaimed()) {
-                if (tg && tg.showAlert) tg.showAlert('Награда уже получена.');
-                return;
-            }
-            gainStars(channel.reward);
-            channel.claim();
-            updateSubUI(channel);
-            refreshUI();
-            queueSave(true);
-            if (tg && tg.showAlert) tg.showAlert(`+${channel.reward} 💵 за подписку!`);
-        });
+      channel.elements.open?.addEventListener('click',()=>{
+        try{ if(tg && typeof tg.openTelegramLink==='function'){ tg.openTelegramLink(channel.url); } else { window.open(channel.url,'_blank'); } }
+        catch(_){ window.open(channel.url,'_blank'); }
+      });
+
+      channel.elements.check?.addEventListener('click', async () => {
+        if(channel.isClaimed()){ tg && tg.showAlert && tg.showAlert('Награда уже получена.'); return; }
+        if(!tg || !tg.initData){ alert('Открой мини‑приложение внутри Telegram, чтобы проверить подписку.'); return; }
+
+        const st = channel.elements.status; if(st){ st.textContent='Проверяем подписку…'; st.style.color='#fde68a'; }
+        const result = await checkMembershipOnServer(channel.chat);
+
+        if(result.ok && result.member){
+          gainStars(channel.reward);
+          channel.claim();
+          updateSubUI(channel); refreshUI(); queueSave(true);
+          tg && tg.showAlert && tg.showAlert(`+${channel.reward} 💵 за подписку!`);
+        } else {
+          if(st){ st.textContent = 'Не подписан. Подпишись и нажми «Проверить».'.trim(); st.style.color='#fca5a5'; }
+          tg && tg.showAlert && tg.showAlert('Сначала подпишись на канал, затем нажми «Проверить».');
+        }
+      });
     }
   })();
 });
