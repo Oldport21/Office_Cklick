@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Кликер" />
@@ -14,7 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Прелоад аудио строго по пути github/music/... -->
   <link rel="preload" as="audio" href="github/music/music_game.mp3">
   <link rel="preload" as="audio" href="github/music/click.mp3">
 
@@ -22,23 +21,47 @@
     :root{
       --blur-bg:6px;
       --cell-h:88px;
-      /* безопасный отступ снизу под закреплённый footer */
-      --bottom-safe: calc(92px + env(safe-area-inset-bottom));
-      /* поднять героя и полосу энергии вверх */
-      --raise: 22px;
+      /* безопасные зоны */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      /* будут перезаписаны JS */
+      --header-h: 56px;
+      --footer-h: 88px;
+      /* размер сцены героя (подстраивается JS, это фолбэк) */
+      --stage-size: clamp(220px, min(78vw, 58svh), 420px);
+      /* лёгкий подъем центра */
+      --raise: 18px;
     }
-    body{font-family:'Inter',sans-serif;background:#0b1026;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;color:#fff}
-    .game-wrapper{position:relative;width:100%;max-width:420px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      font-family:'Inter',sans-serif;
+      background:#0b1026;
+      margin:0; min-height:100%;
+      display:flex; align-items:center; justify-content:center;
+      padding:16px; color:#fff; overflow:hidden;
+    }
+    .game-wrapper{
+      position:relative;
+      width:100%;
+      max-width:460px;
+      height:100dvh;              /* новые браузеры */
+      height:calc(var(--vh,1vh)*100); /* фикс iOS */
+      border-radius:20px; overflow:hidden;
+      box-shadow:0 10px 40px rgba(0,0,0,.6);
+      background:#000;
+    }
     .game-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;transition:opacity .35s ease, filter .35s ease}
     .dim-3{filter:brightness(0.97)}
-    /* не тянем центр вниз; оставляем безопасный паддинг снизу */
     .game-content{
-      position:relative;z-index:1;height:100%;display:flex;flex-direction:column;
+      position:relative; z-index:1; height:100%;
+      display:flex; flex-direction:column;
       justify-content:flex-start;
-      padding:12px 12px var(--bottom-safe);
+      padding:calc(10px + var(--safe-top)) 12px calc(var(--footer-h) + 12px + var(--safe-bottom));
       background:rgba(0,0,0,.28)
     }
 
+    /* Прелоадер */
     .preloader{position:absolute;inset:0;background:#0b1026;display:flex;align-items:center;justify-content:center;z-index:120;transition:opacity .35s ease}
     .preloader.hidden{opacity:0;pointer-events:none;visibility:hidden;display:none}
     .preloader-box{display:flex;flex-direction:column;align-items:center;gap:18px;width:82%;max-width:320px;text-align:center}
@@ -50,21 +73,30 @@
     .preloader-fill{height:100%;width:0%;background:linear-gradient(90deg,#fde047,#f59e0b);border-radius:9999px;transition:width .16s ease}
     @keyframes spin{to{transform:rotate(360deg)}}
 
+    /* Сцена героя */
+    .avatar-stage{width:var(--stage-size);height:var(--stage-size)}
     .podium{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:200px;height:60px;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,#FBBF24 0%,#F59E0B 65%,rgba(0,0,0,0) 70%);filter:drop-shadow(0 0 6px #facc15);z-index:5;animation:pulse 3s ease-in-out infinite}
     .character{position:relative;top:6px;cursor:pointer;user-select:none;z-index:6;animation:land .6s cubic-bezier(.2,.9,.2,1) 60ms both;transition:transform .1s ease-in-out}
     .character:active,.character.pressed{transform:translateY(6px) scale(.98)!important}
     @keyframes land{0%{transform:translateY(-24px) scale(1.02);filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}70%{transform:translateY(2px)}100%{transform:translateY(0)}}
-
     .pet{position:absolute;right:-6px;bottom:2px;width:39%;max-width:138px;pointer-events:none;display:none;z-index:7;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
     .pet.show{display:block}
 
-    .big-score{margin-top:-10px}
+    .big-score{margin-top:-8px}
+    #score-big{font-size:clamp(28px,9vw,56px)}
     .floating-coin{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;font-size:1.1rem;font-weight:800;color:#facc15;pointer-events:none;text-shadow:0 2px 4px rgba(0,0,0,.55);z-index:60;opacity:0;will-change:transform,opacity}
-    .floating-coin img{width:18px;height:18px}
     @keyframes floatUp{from{opacity:1;transform:translate(var(--x,0), var(--y,0))}to{opacity:0;transform:translate(var(--x,0), calc(var(--y,0) - 100px))}}
     @keyframes pulse{0%,100%{filter:drop-shadow(0 0 8px #facc15) drop-shadow(0 0 14px #f59e0b)}50%{filter:drop-shadow(0 0 18px #facc15) drop-shadow(0 0 30px #f59e0b)}}
 
-    .screen{position:absolute;left:0;right:0;bottom:72px;top:122px;margin:12px;padding:12px 12px 16px;border-radius:16px;background:rgba(0,0,0,.65);backdrop-filter:blur(var(--blur-bg));-webkit-backdrop-filter:blur(var(--blur-bg));overflow:auto;display:none;z-index:30}
+    /* Оверлеи */
+    .screen{
+      position:absolute; left:0; right:0;
+      top:calc(var(--header-h) + 12px);
+      bottom:calc(var(--footer-h) + 12px);
+      margin:12px; padding:12px 12px 16px; border-radius:16px;
+      background:rgba(0,0,0,.65); backdrop-filter:blur(var(--blur-bg)); -webkit-backdrop-filter:blur(var(--blur-bg));
+      overflow:auto; display:none; z-index:30
+    }
     .screen.active{display:block}
     .screen, .screen *{color:#fff}
     .screen-title{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0));padding:6px 0 10px;z-index:1}
@@ -72,8 +104,9 @@
     .tab-btn[aria-selected="true"]{outline:2px solid #e5e7eb;background-color:rgb(255 255 255 / .08)}
     .scene-dim .center-area{filter:blur(1px) brightness(.92)}
 
+    /* Слоты */
     .slots-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
-    .slots-box{position:relative;width:300px;border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
+    .slots-box{position:relative;width:min(300px,86%);border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(255,191,41,.35),rgba(255,159,8,.25));box-shadow:inset 0 0 0 4px rgba(255,255,255,.15),0 10px 30px rgba(0,0,0,.5)}
     .slots-window{position:relative;overflow:hidden;height:var(--cell-h);background:rgba(0,0,0,.25);border-radius:12px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.14)}
     .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:100%;padding:8px}
     .reel{position:relative;overflow:hidden;border-radius:10px;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
@@ -84,7 +117,8 @@
     .win-banner.show{animation:popIn .7s ease forwards}
     @keyframes popIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 
-    .rocket-stage{position:relative;width:300px;height:190px;border-radius:16px;background:linear-gradient(180deg,rgba(16,20,45,.9),rgba(10,14,32,.9));box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.5);overflow:hidden}
+    /* Ракета */
+    .rocket-stage{position:relative;width:min(300px,86%);height:190px;border-radius:16px;background:linear-gradient(180deg,rgba(16,20,45,.9),rgba(10,14,32,.9));box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.5);overflow:hidden}
     .rocket-sky{position:absolute;inset:-14%;will-change:transform;background: radial-gradient(2px 2px at 20% 30%,rgba(255,255,255,.35),transparent 60%), radial-gradient(2px 2px at 70% 20%,rgba(255,255,255,.25),transparent 60%), radial-gradient(2px 2px at 40% 70%,rgba(255,255,255,.3),transparent 60%), linear-gradient(180deg,rgba(20,24,50,.8),rgba(10,12,30,.9)); filter:brightness(.95) }
     .rocket-curve{position:absolute;left:0;bottom:12px;width:100%;height:2px;background:linear-gradient(90deg,rgba(156,163,175,.1),rgba(168,85,247,.9));opacity:.7;transform-origin:left bottom}
     .rocket-mult{position:absolute;top:10px;left:0;right:0;text-align:center;font-weight:800;font-size:34px;color:#c084fc;text-shadow:0 2px 6px rgba(0,0,0,.6)}
@@ -99,6 +133,7 @@
     .rocket-banner.show{animation:rbIn .6s ease forwards}
     @keyframes rbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.7)}70%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 
+    /* Интро */
     .intro{position:absolute;inset:0;z-index:200;background:linear-gradient(180deg,rgba(5,7,18,.9),rgba(11,16,38,.88));display:none}
     .intro.show{display:block}
     .intro-wrap{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -112,33 +147,34 @@
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;font-weight:800}
     .btn-primary{background:#f59e0b;color:#0b1026}
     .btn-ghost{background:rgba(255,255,255,.14)}
-    .intro-skip{font-size:12px;opacity:.8;text-decoration:underline;margin-left:auto}
 
-    @media (max-width:420px){.intro-card{grid-template-columns:60% 40%;}}
-
-    /* TG аватар: кружок справа */
+    /* TG аватар */
     .tg-user{position:absolute;right:12px;top:12px;z-index:20;display:none;align-items:center;padding:0;border-radius:9999px;background:transparent;box-shadow:none}
     .tg-user.show{display:flex}
     .tg-user img{width:36px;height:36px;border-radius:9999px;object-fit:cover;cursor:pointer;box-shadow:0 0 0 2px rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.35)}
 
-    /* Пинуем нижний навбар, чтобы он всегда был виден */
+    /* Футер закреплён */
     .game-content > footer{position:absolute;left:12px;right:12px;bottom:10px;z-index:10}
 
-    /* лёгкий сдвиг всего центрального блока вверх */
-    .center-area{
-      will-change: transform;
-      transform: translateY(calc(-1 * var(--raise)));
+    /* Подъем центра */
+    .center-area{will-change:transform;transform:translateY(calc(-1 * var(--raise)))}
+
+    /* Адаптив под узкие экраны */
+    @media (max-width:360px){
+      :root{ --cell-h:74px }
+      .cell{font-size:44px}
+    }
+    @media (max-height:640px){
+      :root{ --raise: 8px }
     }
   </style>
 </head>
 <body>
 <div class="game-wrapper" id="wrapper">
-  <!-- TG User badge -->
   <div id="tgUser" class="tg-user" role="button" aria-label="Открыть профиль в Telegram" title="Открыть профиль">
     <img id="tgAva" alt="avatar" src="" />
   </div>
 
-  <!-- АУДИО: строго путь github/music/... -->
   <audio id="bgm" src="github/music/music_game.mp3" preload="auto" loop playsinline></audio>
   <audio id="sfx-click" src="github/music/click.mp3" preload="auto" playsinline></audio>
 
@@ -154,8 +190,8 @@
     </div>
   </div>
 
-  <!-- Сторож прелоадера -->
   <script>
+    /* сторож прелоадера */
     (function(){
       var p=document.getElementById('preloader'); if(!p) return;
       var hid=false; function hide(){ if(hid) return; hid=true; try{ p.classList.add('hidden') }catch(_){ } }
@@ -187,7 +223,7 @@
   <img id="bg" class="game-bg" src="https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png" alt="Фон: Уровень">
 
   <div id="game" class="game-content">
-    <header class="flex justify-between items-center w-full mb-2">
+    <header id="topbar" class="flex justify-between items-center w-full mb-2">
       <div class="flex items-center gap-2">
         <div class="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/></svg>
@@ -213,9 +249,7 @@
         <span class="text-sm">Громкость клика</span>
         <input id="vol-sfx" type="range" min="0" max="1" step="0.01" value="0.8" class="w-40">
       </div>
-      <button id="reset-progress" class="w-full px-3 py-2 rounded-lg bg-red-500/70 hover:bg-red-500 text-white font-semibold">
-        Сбросить прогресс (деньги и уровень)
-      </button>
+      <button id="reset-progress" class="w-full px-3 py-2 rounded-lg bg-red-500/70 hover:bg-red-500 text-white font-semibold">Сбросить прогресс (деньги и уровень)</button>
     </div>
 
     <div id="level-box" class="w-full px-1 mb-2">
@@ -226,7 +260,6 @@
         <div id="lvl-progress-bar" class="h-2 bg-sky-400 rounded-full" style="width:0%"></div>
       </div>
 
-      <!-- МИНИ-КНОПКИ ПОДПИСКИ (уменьшены на 20%, логотип справа) -->
       <div id="sub-mini" class="flex flex-col gap-1 items-end mt-1" style="transform:scale(0.8);transform-origin:right top;">
         <div class="flex items-center gap-1 bg-black/40 px-1.5 py-1 rounded-full">
           <button id="sub-open" class="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/40 hover:bg-purple-500/60 font-semibold">Подписаться</button>
@@ -235,29 +268,26 @@
         <div class="flex items-center gap-1 bg-black/40 px-1.5 py-1 rounded-full">
           <button id="sub-open-2" class="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/40 hover:bg-purple-500/60 font-semibold">Подписаться</button>
           <svg viewBox="0 0 64 64" class="w-6 h-6 rounded-full" aria-hidden="true">
-            <defs>
-              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#22d3ee"/>
-              </linearGradient>
-            </defs>
-            <circle cx="32" cy="32" r="32" fill="url(#g2)"/>
-            <text x="50%" y="58%" text-anchor="middle" font-size="34" font-family="Arial,Helvetica,sans-serif" fill="#0b1026" font-weight="800">U</text>
+            <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0ea5e9"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+            <circle cx="32" cy="32" r="32" fill="url(#g2)"/><text x="50%" y="58%" text-anchor="middle" font-size="34" font-family="Arial,Helvetica,sans-serif" fill="#0b1026" font-weight="800">U</text>
           </svg>
         </div>
       </div>
-      <!-- /мини-кнопки -->
     </div>
 
     <main class="center-area flex flex-col items-center justify-center flex-grow">
       <div class="big-score flex items-center gap-2 mb-2">
         <span class="w-10 h-10 grid place-items-center text-3xl font-extrabold leading-none">💵</span>
-        <span id="score-big" class="text-5xl font-bold">0</span>
+        <span id="score-big" class="font-bold">0</span>
       </div>
-      <div class="relative w-80 h-80 md:w-96 md:h-96 mb-4">
+
+      <!-- СЦЕНА ГЕРОЯ (резиновая) -->
+      <div class="avatar-stage relative mb-4">
         <div class="podium"></div>
         <img id="character" src="https://i.postimg.cc/zXWCKfvw/image.png" alt="Игровой персонаж" class="character w-full h-full drop-shadow-lg">
         <img id="pet-dog" class="pet" src="https://i.postimg.cc/76NmJx8X/dog.png" alt="Собака">
       </div>
+
       <div class="w-full max-w-xs mt-1">
         <div class="flex justify-between text-sm font-semibold mb-1 text-white">
           <span>Энергия</span><span><span id="energy-level">100</span> / <span id="max-energy">100</span></span>
@@ -268,11 +298,9 @@
       </div>
     </main>
 
+    <!-- Экраны -->
     <section id="screen-income" class="screen" aria-hidden="true">
-      <div class="screen-title">
-        <h2 class="text-xl font-bold">Доход</h2>
-        <button class="screen-close" data-close>✕ Закрыть</button>
-      </div>
+      <div class="screen-title"><h2 class="text-xl font-bold">Доход</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div class="space-y-2 text-sm">
         <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>💵 за клик</span><strong id="stat-per-click">1</strong></div>
         <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Восстановление энергии / сек</span><strong id="stat-regen">1</strong></div>
@@ -281,53 +309,16 @@
     </section>
 
     <section id="screen-upgrades" class="screen" aria-hidden="true">
-      <div class="screen-title">
-        <h2 class="text-xl font-bold">Улучшения</h2>
-        <button class="screen-close" data-close>✕ Закрыть</button>
-      </div>
+      <div class="screen-title"><h2 class="text-xl font-bold">Улучшения</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div class="grid gap-3 text-sm">
-        <div class="bg-white/10 p-3 rounded-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <p class="font-semibold">+1 к деньгам за клик</p>
-              <p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p>
-            </div>
-            <button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">
-              Купить за <span id="cost-click">20</span> 💵
-            </button>
-          </div>
-        </div>
-        <div class="bg-white/10 p-3 rounded-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <p class="font-semibold">+10 к максимальной энергии</p>
-              <p class="text-xs text-white/80">Больше кликов подряд</p>
-            </div>
-            <button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">
-              Купить за <span id="cost-max">30</span> 💵
-            </button>
-          </div>
-        </div>
-        <div class="bg-white/10 p-3 rounded-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <p class="font-semibold">+0.5 к восстановлению энергии</p>
-              <p class="text-xs text-white/80">Энергия быстрее возвращается</p>
-            </div>
-            <button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">
-              Купить за <span id="cost-regen">25</span> 💵
-            </button>
-          </div>
-        </div>
-        <!-- Наград за подписку нет -->
+        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div><button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button></div></div>
+        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div><button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button></div></div>
+        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div><button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button></div></div>
       </div>
     </section>
 
     <section id="screen-game" class="screen" aria-hidden="true">
-      <div class="screen-title">
-        <h2 class="text-xl font-bold">Игра</h2>
-        <button class="screen-close" data-close>✕ Закрыть</button>
-      </div>
+      <div class="screen-title"><h2 class="text-xl font-bold">Игра</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div class="flex gap-2 mb-3">
         <button id="tabMiniSlots" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold outline outline-1 outline-white/10">Слоты</button>
         <button id="tabMiniRocket" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold outline outline-1 outline-white/10">Ракета</button>
@@ -396,10 +387,7 @@
     </section>
 
     <section id="screen-skins" class="screen" aria-hidden="true">
-      <div class="screen-title">
-        <h2 class="text-xl font-bold">Скины</h2>
-        <button class="screen-close" data-close>✕ Закрыть</button>
-      </div>
+      <div class="screen-title"><h2 class="text-xl font-bold">Скины</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div id="skin-preview" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/60 backdrop-blur">
         <div class="relative bg-black/80 p-4 rounded-2xl w-[90%] max-w-xs border border-white/10">
           <button id="skin-preview-close" class="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 grid place-items-center text-lg">✕</button>
@@ -418,14 +406,9 @@
     </section>
 
     <section id="screen-donates" class="screen" aria-hidden="true">
-      <div class="screen-title">
-        <h2 class="text-xl font-bold">Донаты (Telegram ⭐)</h2>
-        <button class="screen-close" data-close>✕ Закрыть</button>
-      </div>
+      <div class="screen-title"><h2 class="text-xl font-bold">Донаты (Telegram ⭐)</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div class="grid gap-3 text-sm">
-        <div class="flex justify-between bg-white/10 p-3 rounded-lg">
-          <span>Баланс звёзд Telegram</span><strong id="tg-stars-balance">0 ⭐</strong>
-        </div>
+        <div class="flex justify-between bg-white/10 p-3 rounded-lg"><span>Баланс звёзд Telegram</span><strong id="tg-stars-balance">0 ⭐</strong></div>
         <div class="grid gap-2">
           <div class="flex flex-wrap gap-2">
             <button class="donate-btn px-3 py-2 rounded-lg bg-purple-500/80 hover:bg-purple-500 text-white font-semibold" data-amt="10">Задонатить 10 ⭐</button>
@@ -435,14 +418,11 @@
           <p class="text-xs text-white/60">Оплата откроется в Telegram. После успешного платежа баланс ⭐ увеличится автоматически.</p>
         </div>
         <div class="bg-white/5 rounded-lg p-3">
-          <div class="flex items-center justify-between">
-            <div class="font-semibold">Настройки донатов</div>
-            <button id="donate-settings-toggle" class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs">⚙️ Открыть</button>
-          </div>
+          <div class="flex items-center justify-between"><div class="font-semibold">Настройки донатов</div><button id="donate-settings-toggle" class="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-xs">⚙️ Открыть</button></div>
           <div id="donate-settings" class="mt-2 hidden grid gap-2">
-            <p class="text-xs text-white/70">Два варианта: <b>вставь готовые ссылки</b> на инвойсы Stars (10/50/100), либо <b>укажи URL своего сервера</b> — игра сама запросит ссылку через <code>/invoice?amount=...</code>.</p>
+            <p class="text-xs text-white/70">Варианты: <b>вставь готовые ссылки</b> на инвойсы Stars, либо <b>укажи URL сервера</b> — игра запросит <code>/invoice?amount=...</code>.</p>
             <div class="mt-1 p-2 rounded bg-white/5">
-              <div class="font-semibold mb-1">Ручные ссылки (Stars инвойсы)</div>
+              <div class="font-semibold mb-1">Ручные ссылки</div>
               <label class="grid gap-1"><span class="text-xs">Инвойс 10 ⭐</span><input id="invoice-10" class="bg-black/40 px-2 py-1 rounded" /></label>
               <label class="grid gap-1"><span class="text-xs">Инвойс 50 ⭐</span><input id="invoice-50" class="bg-black/40 px-2 py-1 rounded" /></label>
               <label class="grid gap-1"><span class="text-xs">Инвойс 100 ⭐</span><input id="invoice-100" class="bg-black/40 px-2 py-1 rounded" /></label>
@@ -456,7 +436,7 @@
               <button id="donate-settings-save" class="px-3 py-2 rounded bg-emerald-500/80 hover:bg-emerald-500 text-white text-sm font-semibold">Сохранить</button>
               <button id="donate-settings-clear" class="px-3 py-2 rounded bg-red-500/70 hover:bg-red-500 text-white text-sm font-semibold">Очистить</button>
             </div>
-            <p class="text-[11px] text-white/60">Stars: <code>currency: "XTR"</code>, <code>provider_token: ""</code> (пусто). Можно без сервера — вручную. С сервером игра вызывает <code>GET /invoice?amount=10|50|100</code> и открывает полученный URL.</p>
+            <p class="text-[11px] text-white/60">Stars: <code>currency:"XTR"</code>, <code>provider_token:""</code>. С сервером игра делает <code>GET /invoice?amount=10|50|100</code>.</p>
           </div>
         </div>
         <div class="flex gap-2">
@@ -467,43 +447,30 @@
       </div>
     </section>
 
-    <footer class="w-full bg-black/45 p-2 rounded-2xl mt-2">
+    <footer id="bottombar" class="w-full bg-black/45 p-2 rounded-2xl mt-2">
       <nav class="flex justify-around items-end">
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-income" aria-selected="false">
           <div class="p-3 bg-yellow-500/20 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <span class="text-xs mt-1">Доход</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-300"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div><span class="text-xs mt-1">Доход</span>
         </button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-upgrades" aria-selected="false">
           <div class="p-3 bg-blue-500/20 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
-          <span class="text-xs mt-1">Улучшения</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-300"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div><span class="text-xs mt-1">Улучшения</span>
         </button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-game" aria-selected="false">
           <div class="p-3 bg-amber-500/20 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300">
-              <rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/>
-            </svg>
-          </div>
-          <span class="text-xs mt-1">Игра</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-300"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v16M16 4v16"/></svg>
+          </div><span class="text-xs mt-1">Игра</span>
         </button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-skins" aria-selected="false">
-          <div class="p-3 bg-emerald-500/20 rounded-lg"><span class="text-2xl leading-none">🐾</span></div>
-          <span class="text-xs mt-1">Скины</span>
+          <div class="p-3 bg-emerald-500/20 rounded-lg"><span class="text-2xl leading-none">🐾</span></div><span class="text-xs mt-1">Скины</span>
         </button>
         <button class="tab-btn flex flex-col items-center text-center text-white/90 hover:text-white transition-colors" data-screen="screen-donates" aria-selected="false">
           <div class="p-3 bg-purple-500/20 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300">
-              <polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/>
-            </svg>
-          </div>
-          <span class="text-xs mt-1">Донаты</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-300"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9 12 2"/></svg>
+          </div><span class="text-xs mt-1">Донаты</span>
         </button>
       </nav>
     </footer>
@@ -512,7 +479,34 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Прелоадер-сторож дубль ---
+  /* === 1) Фикс высоты вьюпорта и динамические переменные компоновки === */
+  const rootStyle = document.documentElement.style;
+  function setVH(){ rootStyle.setProperty('--vh', (window.innerHeight*0.01)+'px'); }
+  setVH(); window.addEventListener('resize', setVH);
+
+  function updateLayoutVars(){
+    const header=document.getElementById('topbar');
+    const footer=document.getElementById('bottombar');
+    const hh = header ? Math.ceil(header.getBoundingClientRect().height) : 56;
+    const fh = footer ? Math.ceil(footer.getBoundingClientRect().height) : 88;
+    rootStyle.setProperty('--header-h', hh+'px');
+    rootStyle.setProperty('--footer-h', fh+'px');
+
+    // Подбор размера сцены героя: не больше 52% высоты и 82% ширины
+    const wrap=document.getElementById('wrapper');
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    const size = Math.max(220, Math.min(420, Math.min(w*0.82, (h - hh - fh) * 0.52)));
+    rootStyle.setProperty('--stage-size', Math.round(size)+'px');
+  }
+  updateLayoutVars();
+  const roH = new ResizeObserver(updateLayoutVars);
+  const roF = new ResizeObserver(updateLayoutVars);
+  document.getElementById('topbar') && roH.observe(document.getElementById('topbar'));
+  document.getElementById('bottombar') && roF.observe(document.getElementById('bottombar'));
+  window.addEventListener('resize', updateLayoutVars);
+
+  /* --- дубль сторожа прелоадера --- */
   (function(){
     var p=document.getElementById('preloader'); if(!p) return;
     var hid=false; function hide(){ if(hid) return; hid=true; try{ p.classList.add('hidden') }catch(_){ } }
@@ -520,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(hide, 7000);
   })();
 
+  /* === Игровая логика (как в предыдущей версии) === */
   const SAVE_KEY='clicker_save_v4';
   let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
   let telegramStars=0;
@@ -590,30 +585,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   settingsBtn?.addEventListener('click',()=>settingsPanel?.classList.toggle('hidden'));
 
-  // ===== Хаптик =====
+  // ===== Хаптик + каналы =====
   const tg=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
-  function hapticTap(){
-    try{ if(tg&&tg.HapticFeedback&&typeof tg.HapticFeedback.impactOccurred==='function'){ tg.HapticFeedback.impactOccurred('light') } }catch(_){}
-    try{ if('vibrate' in navigator){ navigator.vibrate(10) } }catch(_){}
-  }
+  function hapticTap(){ try{ tg?.HapticFeedback?.impactOccurred?.('light') }catch(_){ } try{ navigator?.vibrate?.(10) }catch(_){ } }
   document.getElementById('spinBtn')?.addEventListener('click',hapticTap);
   document.getElementById('rocketStart')?.addEventListener('click',hapticTap);
   document.getElementById('rocketCashout')?.addEventListener('click',hapticTap);
   document.getElementById('character')?.addEventListener('pointerdown',hapticTap,{passive:true});
   document.getElementById('sub-open')?.addEventListener('pointerdown',hapticTap,{passive:true});
   document.getElementById('sub-open-2')?.addEventListener('pointerdown',hapticTap,{passive:true});
-
-  // Открытие каналов
-  function openChannel(url){
-    try{
-      if(tg && typeof tg.openTelegramLink==='function'){ tg.openTelegramLink(url); }
-      else { window.open(url,'_blank'); }
-    }catch(_){ window.open(url,'_blank'); }
-  }
+  function openChannel(url){ try{ if(tg && typeof tg.openTelegramLink==='function'){ tg.openTelegramLink(url); } else { window.open(url,'_blank'); } }catch(_){ window.open(url,'_blank'); } }
   document.getElementById('sub-open')?.addEventListener('click',()=>openChannel('https://t.me/vers_diz'));
   document.getElementById('sub-open-2')?.addEventListener('click',()=>openChannel('https://t.me/Ugly_Studio'));
 
-  // ===== Ассеты уровней =====
+  // ===== Ассеты =====
   const BG_BY_LEVEL=[
     'https://i.postimg.cc/bYC9rVNc/Chat-GPT-Image-16-2025-17-40-13.png',
     'https://i.postimg.cc/yxDKJ5Tx/Chat-GPT-Image-18-2025-03-14-02.png',
@@ -636,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function assetByLevelClamp(arr,lvl){ const i=Math.min(arr.length-1,Math.max(1,lvl)-1); return arr[i] }
 
-  // ===== Сохранение/загрузка =====
+  // ===== Сохранение =====
   function saveState(){
     const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,activeSkin,ts:Date.now()};
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}
@@ -749,30 +734,26 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePet();
   }
 
-  // Аним. монеты
+  // Монетки
   let wrapperRect=wrapper.getBoundingClientRect();
   function updateWrapperRect(){ wrapperRect=wrapper.getBoundingClientRect() }
   window.addEventListener('resize',updateWrapperRect,{passive:true});
   window.addEventListener('scroll',updateWrapperRect,{passive:true});
   const COIN_POOL=12; const coinPool=[]; let coinPtr=0;
   for(let i=0;i<COIN_POOL;i++){
-    const el=document.createElement('div');
-    el.className='floating-coin';
+    const el=document.createElement('div'); el.className='floating-coin';
     el.innerHTML='<span class="coin-text">+1<\/span> <span class="font-extrabold">💵<\/span>';
     wrapper.appendChild(el); coinPool.push(el);
   }
   function animateCoin(el,x,y,val){
     el.querySelector('.coin-text').textContent='+'+val;
-    el.style.setProperty('--x',(x|0)+'px');
-    el.style.setProperty('--y',(y|0)+'px');
-    el.style.animation='none'; void el.offsetWidth;
-    el.style.animation='floatUp 1s ease-out forwards';
+    el.style.setProperty('--x',(x|0)+'px'); el.style.setProperty('--y',(y|0)+'px');
+    el.style.animation='none'; void el.offsetWidth; el.style.animation='floatUp 1s ease-out forwards';
   }
   function showFloatingCoin(evt){
     const cx=(evt.clientX||(evt.touches&&evt.touches[0].clientX))-wrapperRect.left;
     const cy=(evt.clientY||(evt.touches&&evt.touches[0].clientY))-wrapperRect.top-20;
-    const el=coinPool[coinPtr++%COIN_POOL];
-    animateCoin(el,cx+(Math.random()*24-12),cy,perClick);
+    const el=coinPool[coinPtr++%COIN_POOL]; animateCoin(el,cx+(Math.random()*24-12),cy,perClick);
   }
   function gainStars(a){ stars+=a; xp+=a }
 
@@ -795,12 +776,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function onClickCharacter(e){
     if(energy>=1){
-      playClickSfx();
-      gainStars(perClick);
-      energy-=1;
-      showFloatingCoin(e);
-      refreshUI();
-      queueSave();
+      playClickSfx(); gainStars(perClick); energy-=1; showFloatingCoin(e);
+      refreshUI(); queueSave();
     }
   }
   function pressDown(){character.classList.add('pressed')}
@@ -815,35 +792,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Реген энергии
   setInterval(()=>{ if(energy<maxEnergy){ energy+=regenPerSec/2; if(energy>maxEnergy)energy=maxEnergy; refreshUI() } },500);
 
-  // ===== Навигация/экраны =====
+  // Навигация/экраны
   const tabButtons=[...document.querySelectorAll('.tab-btn')];
-  const screens={
-    income:document.getElementById('screen-income'),
-    upgrades:document.getElementById('screen-upgrades'),
-    game:document.getElementById('screen-game'),
-    skins:document.getElementById('screen-skins'),
-    donates:document.getElementById('screen-donates')
-  };
-  function hideAllScreens(){
-    Object.values(screens).forEach(el=>{ if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true') } });
-    gameRoot.classList.remove('scene-dim');
-  }
+  const screens={ income:document.getElementById('screen-income'), upgrades:document.getElementById('screen-upgrades'), game:document.getElementById('screen-game'), skins:document.getElementById('screen-skins'), donates:document.getElementById('screen-donates') };
+  function hideAllScreens(){ Object.values(screens).forEach(el=>{ if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true') } }); gameRoot.classList.remove('scene-dim'); }
   function setActiveBtn(btn){ tabButtons.forEach(b=>b.setAttribute('aria-selected','false')); if(btn) btn.setAttribute('aria-selected','true') }
-  function openScreenById(id){
-    hideAllScreens();
-    const el=document.getElementById(id);
-    if(el){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); gameRoot.classList.add('scene-dim') }
-  }
+  function openScreenById(id){ hideAllScreens(); const el=document.getElementById(id); if(el){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); gameRoot.classList.add('scene-dim') } }
   function closeScreens(){ hideAllScreens(); setActiveBtn(null) }
-  tabButtons.forEach(btn=>btn.addEventListener('click',()=>{
-    const id=btn.getAttribute('data-screen');
-    const el=document.getElementById(id);
-    const opened=el&&el.classList.contains('active');
-    if(opened){ closeScreens() } else { openScreenById(id); setActiveBtn(btn) }
-  }));
+  tabButtons.forEach(btn=>btn.addEventListener('click',()=>{ const id=btn.getAttribute('data-screen'); const el=document.getElementById(id); const opened=el&&el.classList.contains('active'); if(opened){ closeScreens() } else { openScreenById(id); setActiveBtn(btn) } }));
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeScreens));
 
-  // Закрытия панелей по клику вне
+  // Клики вне панелей
   document.addEventListener('pointerdown',(e)=>{
     const t=e.target;
     const hasOpen=Object.values(screens).some(el=>el&&el.classList.contains('active'));
@@ -856,32 +815,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const paytable=document.getElementById('paytable');
     const payBtn=document.getElementById('paytableBtn');
     if(paytable && !paytable.classList.contains('hidden')){
-      const inside=paytable.contains(t);
-      const onBtn=(t===payBtn)||(payBtn&&payBtn.contains(t));
+      const inside=paytable.contains(t); const onBtn=(t===payBtn)||(payBtn&&payBtn.contains(t));
       if(!inside&&!onBtn){ paytable.classList.add('hidden') }
     }
     const donatePanel=document.getElementById('donate-settings');
     const donateTgl=document.getElementById('donate-settings-toggle');
     if(donatePanel && !donatePanel.classList.contains('hidden')){
-      const inside=donatePanel.contains(t);
-      const onBtn=(t===donateTgl)||(donateTgl&&donateTgl.contains(t));
+      const inside=donatePanel.contains(t); const onBtn=(t===donateTgl)||(donateTgl&&donateTgl.contains(t));
       if(!inside&&!onBtn){ donatePanel.classList.add('hidden') }
     }
   });
 
   // Магазин апгрейдов
   function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); queueSave(); return true } return false }
-  btnBuyClick?.addEventListener('click',()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); queueSave(true) } });
-  btnBuyMax?.addEventListener('click',()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy,energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); queueSave(true) } });
-  btnBuyRegen?.addEventListener('click',()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); queueSave(true) } });
-  resetBtn?.addEventListener('click',()=>{
-    stars=0; xp=0; energy=100; maxEnergy=100; perClick=1; regenPerSec=1;
-    priceClick=20; priceMax=30; priceRegen=25; ownedSkins={}; activePet=''; activeSkin='';
-    try{localStorage.removeItem(SAVE_KEY)}catch(e){}
-    refreshUI(); queueSave(true);
-  });
+  document.getElementById('buy-click')?.addEventListener('click',()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); queueSave(true) } });
+  document.getElementById('buy-max')?.addEventListener('click',()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy,energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); queueSave(true) } });
+  document.getElementById('buy-regen')?.addEventListener('click',()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); queueSave(true) } });
+  resetBtn?.addEventListener('click',()=>{ stars=0; xp=0; energy=100; maxEnergy=100; perClick=1; regenPerSec=1; priceClick=20; priceMax=30; priceRegen=25; ownedSkins={}; activePet=''; activeSkin=''; try{localStorage.removeItem(SAVE_KEY)}catch(e){} refreshUI(); queueSave(true); });
 
-  // ===== Донаты Stars =====
+  // Донаты Stars
   const LINKS_KEY='donate_links_v1';
   function loadLinks(){ try{const raw=localStorage.getItem(LINKS_KEY); return raw?JSON.parse(raw):{} }catch(e){ return {} } }
   function saveLinks(obj){ try{localStorage.setItem(LINKS_KEY,JSON.stringify(obj||{}))}catch(e){} }
@@ -903,20 +855,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if(inputBackend)inputBackend.value=localStorage.getItem(BACKEND_URL_KEY)||'';
   if(inputUseBackend)inputUseBackend.checked=(localStorage.getItem(USE_BACKEND_KEY)==='1');
   settingsToggle?.addEventListener('click',()=>{settingsPanelDonate.classList.toggle('hidden')});
-  settingsSave?.addEventListener('click',()=>{
-    const obj={'10':(input10?.value||'').trim(),'50':(input50?.value||'').trim(),'100':(input100?.value||'').trim(),};
-    saveLinks(obj);
-    if(inputBackend){localStorage.setItem(BACKEND_URL_KEY,(inputBackend.value||'').trim())}
-    if(inputUseBackend){localStorage.setItem(USE_BACKEND_KEY,inputUseBackend.checked?'1':'0')}
-    alert('Настройки донатов сохранены.');
-  });
-  settingsClear?.addEventListener('click',()=>{
-    saveLinks({});
-    if(input10)input10.value=''; if(input50)input50.value=''; if(input100)input100.value='';
-    if(inputBackend){inputBackend.value=''; localStorage.removeItem(BACKEND_URL_KEY)}
-    if(inputUseBackend){inputUseBackend.checked=false; localStorage.removeItem(USE_BACKEND_KEY)}
-    alert('Ссылки и настройки сервера очищены.');
-  });
+  settingsSave?.addEventListener('click',()=>{ const obj={'10':(input10?.value||'').trim(),'50':(input50?.value||'').trim(),'100':(input100?.value||'').trim(),}; saveLinks(obj); if(inputBackend){localStorage.setItem(BACKEND_URL_KEY,(inputBackend.value||'').trim())} if(inputUseBackend){localStorage.setItem(USE_BACKEND_KEY,inputUseBackend.checked?'1':'0')} alert('Настройки донатов сохранены.'); });
+  settingsClear?.addEventListener('click',()=>{ saveLinks({}); if(input10)input10.value=''; if(input50)input50.value=''; if(input100)input100.value=''; if(inputBackend){inputBackend.value=''; localStorage.removeItem(BACKEND_URL_KEY)} if(inputUseBackend){inputUseBackend.checked=false; localStorage.removeItem(USE_BACKEND_KEY)} alert('Ссылки и настройки сервера очищены.'); });
   function openStarsInvoice(amount){
     const useBackend=(localStorage.getItem(USE_BACKEND_KEY)==='1');
     const backendUrl=(localStorage.getItem(BACKEND_URL_KEY)||'').trim();
@@ -948,9 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })();
   }
-  document.querySelectorAll('.donate-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ const amt=parseInt(btn.getAttribute('data-amt'),10)||0; if(amt>0)openStarsInvoice(amt) });
-  });
+  document.querySelectorAll('.donate-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ const amt=parseInt(btn.getAttribute('data-amt'),10)||0; if(amt>0)openStarsInvoice(amt) }); });
   tgAdd10?.addEventListener('click',()=>{telegramStars+=10;refreshUI();queueSave(true)});
   tgReset?.addEventListener('click',()=>{telegramStars=0;refreshUI();queueSave(true)});
   if(tg&&typeof tg.onEvent==='function'){ tg.onEvent('invoiceClosed',(obj)=>{console.log('invoiceClosed:',obj)}) }
@@ -958,13 +896,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== СЛОТЫ =====
   const SPIN_COST=5,COOLDOWN_MS=900;
   const symbols=[
-    {emoji:'🍒',weight:24,payout3:15},
-    {emoji:'🍋',weight:20,payout3:20},
-    {emoji:'🍉',weight:14,payout3:40},
-    {emoji:'🍇',weight:10,payout3:60},
-    {emoji:'🍀',weight:16,payout3:30},
-    {emoji:'🍑',weight:12,payout3:35},
-    {emoji:'7️⃣',weight:4,payout3:250}
+    {emoji:'🍒',weight:24,payout3:15},{emoji:'🍋',weight:20,payout3:20},{emoji:'🍉',weight:14,payout3:40},
+    {emoji:'🍇',weight:10,payout3:60},{emoji:'🍀',weight:16,payout3:30},{emoji:'🍑',weight:12,payout3:35},{emoji:'7️⃣',weight:4,payout3:250}
   ];
   const reelsEls=[document.getElementById('reel0'),document.getElementById('reel1'),document.getElementById('reel2')];
   const spinBtn=document.getElementById('spinBtn');
@@ -989,19 +922,12 @@ document.addEventListener('DOMContentLoaded', () => {
     data.el.style.transform = 'translateY(0px)';
   }
   reels.forEach(buildReel);
-  function weightedPickIdx(){
-    const total=symbols.reduce((a,s)=>a+s.weight,0);
-    let r=Math.random()*total;
-    for(let i=0;i<symbols.length;i++){ r-=symbols[i].weight; if(r<=0) return i }
-    return symbols.length-1;
-  }
+  function weightedPickIdx(){ const total=symbols.reduce((a,s)=>a+s.weight,0); let r=Math.random()*total; for(let i=0;i<symbols.length;i++){ r-=symbols[i].weight; if(r<=0) return i } return symbols.length-1; }
   function capReel(data){ if(data.arr.length>300){ data.current=0; buildReel(data) } }
   function ensureTargetIndex(data,symbol,start){
     let idx=data.arr.indexOf(symbol,start);
     if(idx!==-1) return idx;
-    const extra=[];
-    for(let k=0;k<symbols.length*3;k++){ extra.push(symbols[k%symbols.length].emoji) }
-    extra.push(symbol);
+    const extra=[]; for(let k=0;k<symbols.length*3;k++){ extra.push(symbols[k%symbols.length].emoji) } extra.push(symbol);
     data.arr.push(...extra);
     const frag=document.createDocumentFragment();
     extra.forEach(e=>{ const d=document.createElement('div'); d.className='cell'; d.textContent=e; frag.appendChild(d) });
@@ -1106,7 +1032,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(rMult>=rCrashAt){ return rCrash() }
     rocketMultEl.textContent='x'+rMult.toFixed(2);
     const p=Math.min(1,Math.log(rMult)/Math.log(6));
-    const stageW=300,padL=12,padR=10,shipW=44;
+    const stageW=document.querySelector('.rocket-stage').clientWidth;
+    const padL=12,padR=10,shipW=44;
     const rangeX=stageW-padL-padR-shipW;
     const x=clamp(p*rangeX,0,rangeX);
     const y=clamp(-p*110,-120,0);
@@ -1172,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   tabMiniSlots?.addEventListener('click',()=>showMini('slots'));
   tabMiniRocket?.addEventListener('click',()=>showMini('rocket'));
-  showMini('slots');  // ← было лишнее ")"
+  showMini('slots');
 
   // ===== СКИНЫ =====
   function skinCardHTML(item){
@@ -1195,14 +1122,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const equipped=owned && activePet==='dog';
     return `<div class="bg-white/10 p-3 rounded-lg flex gap-3 items-center">
       <img src="${DOG_URL}" alt="Собака" class="w-16 h-16 object-contain rounded-md bg-black/30">
-      <div class="flex-1">
-        <div class="font-semibold">Собака</div>
-        <div class="text-xs text-white/70">${owned?'Питомец доступен':'Будет стоять справа от героя'}</div>
-      </div>
+      <div class="flex-1"><div class="font-semibold">Собака</div><div class="text-xs text-white/70">${owned?'Питомец доступен':'Будет стоять справа от героя'}</div></div>
       <div class="grid gap-2 justify-items-end">
-        ${owned
-          ? `<button id="skin-dog-equip" class="px-3 py-1 rounded-md ${equipped?'bg-emerald-500/80 hover:bg-emerald-500':'bg-blue-500/30 hover:bg-blue-500/50'} font-semibold">${equipped?'Убрать':'Включить'}</button>`
-          : `<button id="skin-dog-buy" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 font-semibold">Купить за ${SKIN_PRICE} 💵</button>`}
+        ${owned?`<button id="skin-dog-equip" class="px-3 py-1 rounded-md ${equipped?'bg-emerald-500/80 hover:bg-emerald-500':'bg-blue-500/30 hover:bg-blue-500/50'} font-semibold">${equipped?'Убрать':'Включить'}</button>`:`<button id="skin-dog-buy" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 font-semibold">Купить за ${SKIN_PRICE} 💵</button>`}
       </div>
     </div>`;
   }
@@ -1229,8 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderSkinsUI(){
     if(!skinsListEl) return;
-    let html='';
-    html+='<div class="text-xs uppercase tracking-wide text-white/60">Персонажи</div>';
+    let html=''; html+='<div class="text-xs uppercase tracking-wide text-white/60">Персонажи</div>';
     for(const item of CHARACTER_SKINS){ html+=skinCardHTML(item) }
     html+='<div class="text-xs uppercase tracking-wide text-white/60 mt-2">Питомцы</div>';
     html+=dogCardHTML();
@@ -1240,49 +1161,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const buyBtn=document.getElementById(`skin-${item.key}-buy`);
       const eqBtn=document.getElementById(`skin-${item.key}-equip`);
       const nameBtn=[...document.querySelectorAll('.skin-name')].find(b=>b.getAttribute('data-skin')===item.key);
-      if(buyBtn){
-        buyBtn.addEventListener('click',()=>{
-          if(tryBuy(SKIN_PRICE)){ ownedSkins[item.key]=true; activeSkin=item.key; refreshUI(); queueSave(true) }
-          else{ alert('Нужно '+SKIN_PRICE+' 💵') }
-        });
-      }
-      if(eqBtn){
-        eqBtn.addEventListener('click',()=>{
-          if(!ownedSkins[item.key])return;
-          activeSkin=(activeSkin===item.key)?'':item.key;
-          refreshUI(); queueSave(true);
-        });
-      }
+      if(buyBtn){ buyBtn.addEventListener('click',()=>{ if(tryBuy(SKIN_PRICE)){ ownedSkins[item.key]=true; activeSkin=item.key; refreshUI(); queueSave(true) } else { alert('Нужно '+SKIN_PRICE+' 💵') } }); }
+      if(eqBtn){ eqBtn.addEventListener('click',()=>{ if(!ownedSkins[item.key])return; activeSkin=(activeSkin===item.key)?'':item.key; refreshUI(); queueSave(true); }); }
       if(nameBtn){ nameBtn.addEventListener('click',()=> openSkinPreviewByKey(item.key)) }
     }
     const dogBuy=document.getElementById('skin-dog-buy');
     const dogEq=document.getElementById('skin-dog-equip');
-    if(dogBuy){
-      dogBuy.addEventListener('click',()=>{
-        if(tryBuy(SKIN_PRICE)){ ownedSkins['dog']=true; activePet='dog'; refreshUI(); queueSave(true) }
-        else{ alert('Нужно '+SKIN_PRICE+' 💵') }
-      });
-    }
-    if(dogEq){
-      dogEq.addEventListener('click',()=>{
-        activePet=(activePet==='dog')?'':'dog';
-        refreshUI(); queueSave(true);
-      });
-    }
+    if(dogBuy){ dogBuy.addEventListener('click',()=>{ if(tryBuy(SKIN_PRICE)){ ownedSkins['dog']=true; activePet='dog'; refreshUI(); queueSave(true) } else { alert('Нужно '+SKIN_PRICE+' 💵') } }); }
+    if(dogEq){ dogEq.addEventListener('click',()=>{ activePet=(activePet==='dog')?'':'dog'; refreshUI(); queueSave(true); }); }
   }
-  previewBuy?.addEventListener('click',()=>{
-    const key=previewKey; if(!key) return;
-    if(tryBuy(SKIN_PRICE)){ ownedSkins[key]=true; activeSkin=key; refreshUI(); queueSave(true); closeSkinPreview() }
-    else{ alert('Нужно '+SKIN_PRICE+' 💵') }
-  });
-  previewEquip?.addEventListener('click',()=>{
-    const key=previewKey; if(!key) return;
-    if(!ownedSkins[key]){ alert('Скин не куплен'); return }
-    activeSkin=(activeSkin===key)?'':key; refreshUI(); queueSave(true); closeSkinPreview();
-  });
+  previewBuy?.addEventListener('click',()=>{ const key=previewKey; if(!key) return; if(tryBuy(SKIN_PRICE)){ ownedSkins[key]=true; activeSkin=key; refreshUI(); queueSave(true); closeSkinPreview() } else { alert('Нужно '+SKIN_PRICE+' 💵') } });
+  previewEquip?.addEventListener('click',()=>{ const key=previewKey; if(!key) return; if(!ownedSkins[key]){ alert('Скин не куплен'); return } activeSkin=(activeSkin===key)?'':key; refreshUI(); queueSave(true); closeSkinPreview(); });
   refreshUI();
 
-  // ===== Прелоадер ассетов (мягкий) =====
+  // Прелоадер ассетов (мягкий)
   (function initPreloader(){
     const preloader=document.getElementById('preloader');
     const preloaderFill=document.getElementById('preloader-fill');
@@ -1293,12 +1185,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preloaderFill.style.width=v+'%';
       preloader.querySelector('.preloader-bar')?.setAttribute('aria-valuenow',String(Math.round(v)));
     }
-    const assets=Array.from(new Set([
-      ...(BG_BY_LEVEL||[]), ...(CHAR_BY_LEVEL||[]),
-      INTRO_VERA, DOG_URL,
-      ...CHARACTER_SKINS.map(s=>s.img),
-      'https://i.postimg.cc/TP1Cy2ZT/photo-2024-11-20-16-11-48.jpg'
-    ]));
+    const assets=Array.from(new Set([ ...(BG_BY_LEVEL||[]), ...(CHAR_BY_LEVEL||[]), INTRO_VERA, DOG_URL, ...CHARACTER_SKINS.map(s=>s.img), 'https://i.postimg.cc/TP1Cy2ZT/photo-2024-11-20-16-11-48.jpg' ]));
     let loaded=0;
     function loadImg(u,timeout=6000){
       return new Promise((resolve)=>{
@@ -1311,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     }
     let fake=0; const tick=setInterval(()=>{ fake=Math.min(95,fake+2+Math.random()*3); setProgress(fake) },140);
-    function hide(){ clearInterval(tick); setProgress(100); preloader.classList.add('hidden'); try{ if(typeof window.showIntro==='function') window.showIntro() }catch(_){} }
+    function hide(){ clearInterval(tick); setProgress(100); preloader.classList.add('hidden'); try{ window.showIntro?.() }catch(_){} }
     const hardFallback=setTimeout(hide,9000);
     Promise.allSettled(assets.map(u=>loadImg(u))).then(()=>{
       const elapsed=performance.now()-start; const delay=Math.max(0,minShow-elapsed);
@@ -1323,7 +1210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },{once:true});
   })();
 
-  // ===== ИНИЦ TG-АВАТАРА =====
+  // TG-аватар
   (function initTelegramUser(){
     const wa=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
     const box=document.getElementById('tgUser');
@@ -1335,16 +1222,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const username=u.username?u.username:'';
     ava.src=u.photo_url||'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
     box.classList.add('show');
-    box.addEventListener('click',()=>{
-      if(username&&typeof wa.openTelegramLink==='function'){
-        wa.openTelegramLink('https://t.me/'+username);
-      }
-    });
+    box.addEventListener('click',()=>{ if(username&&typeof wa.openTelegramLink==='function'){ wa.openTelegramLink('https://t.me/'+username); } });
   })();
 });
 </script>
 </body>
 </html>
+
 
 
 
