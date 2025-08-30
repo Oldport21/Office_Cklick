@@ -33,15 +33,13 @@
     html,body{height:100%}
     body{
       font-family:'Inter',sans-serif;
-      background:#0b1026; /* letterbox фон */
+      background:#0b1026;
       margin:0; min-height:100%;
       display:flex; align-items:center; justify-content:center;
       padding:16px; color:#fff; overflow:hidden;
     }
-    /* ВСЕГДА 9:16 — контейнер подгоняется под окно */
     .game-wrapper{
       position:relative;
-      /* Держим соотношение 9:16 и вписываем в окно */
       width:  min(100vw, calc(100dvh * 9 / 16));
       height: min(100dvh, calc(100vw * 16 / 9));
       aspect-ratio: 9 / 16;
@@ -153,6 +151,9 @@
     @media (max-height:640px){
       :root{ --raise: 8px }
     }
+
+    /* Кнопка покупки уровня */
+    #buy-level{width:100%;margin-top:8px}
   </style>
 </head>
 <body>
@@ -162,7 +163,7 @@
     <img id="tgAva" alt="avatar" src="" />
   </div>
 
-  <!-- АУДИО: строго путь github/music/... -->
+  <!-- АУДИО -->
   <audio id="bgm" src="github/music/music_game.mp3" preload="auto" loop playsinline></audio>
   <audio id="sfx-click" src="github/music/click.mp3" preload="auto" playsinline></audio>
 
@@ -196,8 +197,9 @@
           <div class="intro-title">Привет! Я Вера 👋</div>
           <div class="intro-text">
             <ul class="list-disc list-inside space-y-1">
-              <li>Кликай по герою — копи <b>💵</b> и опыт.</li>
-              <li>Каждые <b>200 опыта</b> — новый фон и герой (до 7).</li>
+              <li>Кликай по герою — копи <b>💵</b>.</li>
+              <li>Уровни <b>покупаются</b>: 2-й → 600, 3-й → 900, …, 7-й → 2100.</li>
+              <li>«+1 к деньгам»: 500 → 800 → 1100 (до 5 уровня максимум 3 раза), после 5 уровня — безлимит, +300 к цене.</li>
             </ul>
             <div class="intro-actions">
               <button id="intro-start" class="btn btn-primary">Погнали!</button>
@@ -242,7 +244,8 @@
 
     <div id="level-box" class="w-full px-1 mb-2">
       <div class="flex items-center justify-between text-xs text-white/80 mb-1">
-        <span>До следующего уровня</span><span><span id="lvl-progress">0</span> / 200</span>
+        <span>Следующий уровень</span>
+        <span id="lvl-caption"><span id="lvl-progress">0</span></span>
       </div>
       <div class="w-full bg-white/10 rounded-full h-2">
         <div id="lvl-progress-bar" class="h-2 bg-sky-400 rounded-full" style="width:0%"></div>
@@ -263,6 +266,11 @@
         </div>
       </div>
       <!-- /мини-кнопки -->
+
+      <!-- Кнопка покупки уровня -->
+      <button id="buy-level" class="px-3 py-2 rounded-lg bg-emerald-500/80 hover:bg-emerald-500 text-black font-extrabold hidden">
+        Купить уровень за <span id="level-cost">0</span> 💵
+      </button>
     </div>
 
     <main class="center-area flex flex-col items-center justify-center flex-grow">
@@ -300,9 +308,29 @@
     <section id="screen-upgrades" class="screen" aria-hidden="true">
       <div class="screen-title"><h2 class="text-xl font-bold">Улучшения</h2><button class="screen-close" data-close>✕ Закрыть</button></div>
       <div class="grid gap-3 text-sm">
-        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+1 к деньгам за клик</p><p class="text-xs text-white/80">Увеличивает доход с каждого нажатия</p></div><button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">Купить за <span id="cost-click">20</span> 💵</button></div></div>
-        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div><button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button></div></div>
-        <div class="bg-white/10 p-3 rounded-lg"><div class="flex items-center justify-between mb-2"><div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div><button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button></div></div>
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <p class="font-semibold">+1 к деньгам за клик</p>
+              <p class="text-xs text-white/80">До 3 раз (500→800→1100), после 5 уровня — безлимит, цена +300.</p>
+            </div>
+            <button id="buy-click" class="px-3 py-1 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50">
+              Купить за <span id="cost-click">500</span> 💵
+            </button>
+          </div>
+        </div>
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div><p class="font-semibold">+10 к максимальной энергии</p><p class="text-xs text-white/80">Больше кликов подряд</p></div>
+            <button id="buy-max" class="px-3 py-1 rounded-md bg-blue-500/30 hover:bg-blue-500/50">Купить за <span id="cost-max">30</span> 💵</button>
+          </div>
+        </div>
+        <div class="bg-white/10 p-3 rounded-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div><p class="font-semibold">+0.5 к восстановлению энергии</p><p class="text-xs text-white/80">Энергия быстрее возвращается</p></div>
+            <button id="buy-regen" class="px-3 py-1 rounded-md bg-green-500/30 hover:bg-green-500/50">Купить за <span id="cost-regen">25</span> 💵</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -491,7 +519,6 @@ document.addEventListener('DOMContentLoaded', () => {
     rootStyle.setProperty('--header-h', hh+'px');
     rootStyle.setProperty('--footer-h', fh+'px');
 
-    // размер сцены героя с учётом 9:16 контейнера
     const wrap=document.getElementById('wrapper');
     const w = wrap.clientWidth;
     const h = wrap.clientHeight;
@@ -513,10 +540,31 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(hide, 7000);
   })();
 
-  const SAVE_KEY='clicker_save_v4';
-  let stars=0,xp=0,energy=100,maxEnergy=100,perClick=1,regenPerSec=1;
+  const SAVE_KEY='clicker_save_v4'; // сохраняем совместимость
+  let stars=0, xp=0, energy=100, maxEnergy=100, perClick=1, regenPerSec=1;
   let telegramStars=0;
-  let priceClick=20,priceMax=30,priceRegen=25;
+  let priceMax=30, priceRegen=25;
+
+  // НОВОЕ: уровень игрока и счётчик покупок +1-к-деньгам
+  const MAX_LEVEL=7;
+  let playerLevel=1;
+  let clickUpgradeCount=0; // сколько раз куплен «+1 к деньгам»
+
+  // Цена апгрейда «+1 к деньгам»: 500, 800, 1100, далее +300 за каждый следующий
+  function clickUpgradePrice(){ return 500 + clickUpgradeCount*300; }
+  function canBuyClickUpgrade(){
+    // До 5 уровня максимум 3 покупки
+    if (playerLevel < 5 && clickUpgradeCount >= 3) return false;
+    return true;
+  }
+
+  // Цена следующего уровня: (текущий+1)*300; после 7 уровня — нет следующего
+  function nextLevelCost(){
+    if (playerLevel >= MAX_LEVEL) return null;
+    const next = playerLevel + 1;
+    return next * 300;
+  }
+
   const SKIN_PRICE=10;
 
   const CHARACTER_SKINS=[
@@ -618,7 +666,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ===== Сохранение/загрузка =====
   function saveState(){
-    const p={stars,xp,energy,maxEnergy,perClick,regenPerSec,priceClick,priceMax,priceRegen,telegramStars,ownedSkins,activePet,activeSkin,ts:Date.now()};
+    const p={
+      stars,xp,energy,maxEnergy,perClick,regenPerSec,
+      telegramStars,priceMax,priceRegen,
+      ownedSkins,activePet,activeSkin,
+      playerLevel,clickUpgradeCount,
+      ts:Date.now()
+    };
     try{localStorage.setItem(SAVE_KEY,JSON.stringify(p))}catch(e){}
   }
   let _saveTimer=null,_saveAgain=false;
@@ -634,14 +688,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if(raw){
         const d=JSON.parse(raw);
         if(typeof d.stars==='number')stars=d.stars;
-        xp=typeof d.xp==='number'?d.xp:Math.max(stars,0);
+        // Миграция: если playerLevel не сохранён, вычисляем из старого xp
+        if (typeof d.playerLevel==='number') playerLevel=d.playerLevel;
+        else if (typeof d.xp==='number') playerLevel=Math.max(1,Math.min(MAX_LEVEL, Math.floor(d.xp/200)+1));
         energy=d.energy??energy; maxEnergy=d.maxEnergy??maxEnergy;
         perClick=d.perClick??perClick; regenPerSec=d.regenPerSec??regenPerSec;
-        priceClick=d.priceClick??priceClick; priceMax=d.priceMax??priceMax; priceRegen=d.priceRegen??priceRegen;
         telegramStars=typeof d.telegramStars==='number'?d.telegramStars:telegramStars;
+        priceMax=d.priceMax??priceMax; priceRegen=d.priceRegen??priceRegen;
         ownedSkins=d.ownedSkins&&typeof d.ownedSkins==='object'?d.ownedSkins:{};
         activePet=typeof d.activePet==='string'?d.activePet:'';
         activeSkin=typeof d.activeSkin==='string'?d.activeSkin:'';
+        clickUpgradeCount = typeof d.clickUpgradeCount==='number' ? d.clickUpgradeCount : Math.max(0,(perClick|0)-1);
         const secs=d.ts?Math.max(0,Math.floor((Date.now()-d.ts)/1000)):0;
         energy=Math.min(maxEnergy,energy+secs*regenPerSec);
       }
@@ -654,8 +711,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const gameRoot=document.getElementById('game');
   const character=document.getElementById('character');
   const levelEl=document.getElementById('level');
+  const lvlCaption=document.getElementById('lvl-caption');
   const lvlProgressText=document.getElementById('lvl-progress');
   const lvlProgressBar=document.getElementById('lvl-progress-bar');
+  const buyLevelBtn=document.getElementById('buy-level');
+  const levelCostSpan=document.getElementById('level-cost');
+
   const scoreDisplay=document.getElementById('score');
   const scoreBig=document.getElementById('score-big');
   const energyBar=document.getElementById('energy-bar');
@@ -684,7 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
   introStart?.addEventListener('click',closeIntro);
   window.showIntro=openIntro;
 
-  function currentLevel(){ return Math.floor(xp/200)+1 }
+  const currentLevel = ()=> playerLevel;
+
   function characterSrcBySkin(){
     if(activeSkin&&ownedSkins[activeSkin]){
       const f=CHARACTER_SKINS.find(s=>s.key===activeSkin); if(f) return f.img;
@@ -700,19 +762,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const need=assetByLevelClamp(BG_BY_LEVEL,currentLevel());
     if(bg.getAttribute('src')!==need) bg.setAttribute('src',need);
   }
-  function refreshLevelBar(){
-    const prog=xp%200; lvlProgressText.textContent=prog; lvlProgressBar.style.width=(prog/200*100)+'%';
+
+  function refreshLevelUI(){
+    levelEl.textContent=String(currentLevel());
+
+    const cost = nextLevelCost();
+    if (cost === null){
+      // максимум
+      lvlProgressText.textContent = 'макс.';
+      lvlCaption.textContent = 'Макс. уровень';
+      lvlProgressBar.style.width='100%';
+      buyLevelBtn.classList.add('hidden');
+    } else {
+      // показать прогресс накопления к цене
+      const have = Math.max(0, stars|0);
+      lvlProgressText.textContent = `${Math.min(have,cost)} / ${cost}`;
+      const ratio = Math.max(0, Math.min(1, have / cost));
+      lvlProgressBar.style.width = (ratio*100)+'%';
+      levelCostSpan.textContent = String(cost);
+      buyLevelBtn.disabled = have < cost;
+      buyLevelBtn.classList.remove('hidden');
+    }
   }
+
   function updatePet(){
     if(activePet==='dog'&&ownedSkins['dog']){
       if(petDog){petDog.src=DOG_URL; petDog.classList.add('show')}
     }else{ petDog?.classList.remove('show') }
   }
   function refreshUI(){
-    levelEl.textContent=String(currentLevel());
+    refreshLevelUI();
     refreshCharacterByLevel();
     refreshBackgroundByLevel();
-    refreshLevelBar();
+
     scoreDisplay.textContent=stars;
     scoreBig.textContent=stars;
     if(tgStarsBalance)tgStarsBalance.textContent=telegramStars+' ⭐';
@@ -722,9 +804,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if(statPerClick)statPerClick.textContent=perClick;
     if(statRegen)statRegen.textContent=regenPerSec;
     if(statMaxEnergy)statMaxEnergy.textContent=maxEnergy;
-    if(costClick)costClick.textContent=priceClick;
+
+    // Апгрейд «+1 к деньгам»
+    const priceC = clickUpgradePrice();
+    if (costClick) costClick.textContent = String(priceC);
+    if (btnBuyClick){
+      btnBuyClick.disabled = !canBuyClickUpgrade();
+      btnBuyClick.title = btnBuyClick.disabled ? 'Откроется после достижения 5 уровня' : '';
+    }
+
     if(costMax)costMax.textContent=priceMax;
     if(costRegen)costRegen.textContent=priceRegen;
+
     renderSkinsUI();
     updatePet();
   }
@@ -754,7 +845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const el=coinPool[coinPtr++%COIN_POOL];
     animateCoin(el,cx+(Math.random()*24-12),cy,perClick);
   }
-  function gainStars(a){ stars+=a; xp+=a }
+  function gainStars(a){ stars+=a; /* XP больше не используется для уровня */ }
 
   // Клик по персонажу
   function playClickSfx(){
@@ -831,12 +922,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Магазин апгрейдов
+  // ===== Магазин уровней (покупка) =====
+  buyLevelBtn?.addEventListener('click',()=>{
+    const cost = nextLevelCost();
+    if (cost===null) return;
+    if (stars < cost) return;
+    stars -= cost;
+    playerLevel = Math.min(MAX_LEVEL, playerLevel + 1);
+    refreshUI();
+    queueSave(true);
+  });
+
+  // ===== Магазин апгрейдов =====
   function tryBuy(cost){ if(stars>=cost){ stars-=cost; refreshUI(); queueSave(); return true } return false }
-  btnBuyClick?.addEventListener('click',()=>{ if(tryBuy(priceClick)){ perClick+=1; priceClick=Math.ceil(priceClick*1.6); refreshUI(); queueSave(true) } });
+
+  // «+1 к деньгам»
+  btnBuyClick?.addEventListener('click',()=>{
+    if(!canBuyClickUpgrade()){
+      alert('Доступно после достижения 5 уровня');
+      return;
+    }
+    const price = clickUpgradePrice();
+    if(tryBuy(price)){
+      perClick += 1;
+      clickUpgradeCount += 1;
+      refreshUI();
+      queueSave(true);
+    }
+  });
+
+  // Остальные апгрейды — как было
   btnBuyMax?.addEventListener('click',()=>{ if(tryBuy(priceMax)){ maxEnergy+=10; energy=Math.min(maxEnergy,energy+10); priceMax=Math.ceil(priceMax*1.6); refreshUI(); queueSave(true) } });
   btnBuyRegen?.addEventListener('click',()=>{ if(tryBuy(priceRegen)){ regenPerSec=Math.round((regenPerSec+0.5)*10)/10; priceRegen=Math.ceil(priceRegen*1.6); refreshUI(); queueSave(true) } });
-  resetBtn?.addEventListener('click',()=>{ stars=0; xp=0; energy=100; maxEnergy=100; perClick=1; regenPerSec=1; priceClick=20; priceMax=30; priceRegen=25; ownedSkins={}; activePet=''; activeSkin=''; try{localStorage.removeItem(SAVE_KEY)}catch(e){} refreshUI(); queueSave(true); });
+
+  resetBtn?.addEventListener('click',()=>{
+    stars=0; xp=0; energy=100; maxEnergy=100; perClick=1; regenPerSec=1;
+    priceMax=30; priceRegen=25;
+    ownedSkins={}; activePet=''; activeSkin='';
+    playerLevel=1; clickUpgradeCount=0;
+    try{localStorage.removeItem(SAVE_KEY)}catch(e){}
+    refreshUI(); queueSave(true);
+  });
 
   // ===== Донаты Stars =====
   const LINKS_KEY='donate_links_v1';
@@ -1189,6 +1315,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   previewBuy?.addEventListener('click',()=>{ const key=previewKey; if(!key) return; if(tryBuy(SKIN_PRICE)){ ownedSkins[key]=true; activeSkin=key; refreshUI(); queueSave(true); closeSkinPreview() } else { alert('Нужно '+SKIN_PRICE+' 💵') } });
   previewEquip?.addEventListener('click',()=>{ const key=previewKey; if(!key) return; if(!ownedSkins[key]){ alert('Скин не куплен'); return } activeSkin=(activeSkin===key)?'':key; refreshUI(); queueSave(true); closeSkinPreview(); });
+
+  // Первичный рендер
   refreshUI();
 
   // ===== Прелоадер ассетов (мягкий) =====
